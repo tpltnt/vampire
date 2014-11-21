@@ -561,7 +561,6 @@ void vampireMode()
 BYPASSING_ALLOCATOR;
 }
   //}
-  cout << "got to end " << endl;
 
 } // vampireMode
 
@@ -776,7 +775,6 @@ int main(int argc, char* argv[])
     case Options::MODE_CONSEQUENCE_ELIMINATION:
     case Options::MODE_VAMPIRE:
       vampireMode();
-      cout << "HERE" << endl;
       break;
     case Options::MODE_CASC:
       if (CASC::CASCMode::perform(argc, argv)) {
@@ -895,9 +893,7 @@ int main(int argc, char* argv[])
   }
 //   delete env -> allocator;
   if(env){
-    cout << "deleting env" << endl;
     delete env;
-    cout << "env deleted" << endl;
   }
 
   return vampireReturnValue;
