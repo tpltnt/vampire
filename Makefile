@@ -72,6 +72,9 @@ endif
 ifneq (,$(filter %_gcov,$(MAKECMDGOALS)))
 XFLAGS = $(GCOV_FLAGS) -DIS_LINGVA=0
 endif
+ifneq (,$(filter %_starexec,$(MAKECMDGOALS)))
+XFLAGS = -static $(REL_FLAGS) -DIS_LINGVA=0 
+endif
 
 
 ################################################################
@@ -106,7 +109,10 @@ CXX = g++
 CXXFLAGS = -std=c++11 $(XFLAGS) -Wall $(INCLUDES)
 
 CC = gcc 
-CCFLAGS = -Wall -O3 -DNDBLSCR -DNLGLOG -DNDEBUG -DNCHKSOL -DNLGLPICOSAT 
+ifneq (,$(filter %_starexec,$(MAKECMDGOALS)))
+STAR_CCFLAGS = -static 
+endif
+CCFLAGS = -Wall -O3 -DNDBLSCR -DNLGLOG -DNDEBUG -DNCHKSOL -DNLGLPICOSAT $(STAR_CCFLAGS) 
 ################################################################
 MINISAT_OBJ = Minisat/core/Solver.o\
   Minisat/simp/SimpSolver.o\
@@ -647,7 +653,7 @@ EXEC_DEF_PREREQ = Makefile
 lingva lingva_rel lingva_dbg: $(LINGVA_OBJ) $(EXEC_DEF_PREREQ)
 	$(LLVM_COMPILE_CMD)
 
-vampire vampire_rel vampire_dbg vampire_gcov: $(VAMPIRE_OBJ) $(EXEC_DEF_PREREQ)
+vampire vampire_rel vampire_dbg vampire_gcov vampire_starexec: $(VAMPIRE_OBJ) $(EXEC_DEF_PREREQ)
 	$(COMPILE_CMD)
 
 vcompit: $(VCOMPIT_OBJ) $(EXEC_DEF_PREREQ)

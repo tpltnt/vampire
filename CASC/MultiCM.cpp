@@ -3,7 +3,11 @@
  * Implements class MultiCM.
  */
 
+#define USE_THIS 0
+
+#if USE_THIS
 #include <regex>
+#endif
 
 #include "Forwards.hpp"
 
@@ -107,6 +111,7 @@ void MultiCM::transformToOptionsList(Schedule& schedule)
     // copy orig
     opt = orig_opt;    
 
+#if USE_THIS
     // Remove preprocessing from all but the first sliceCode
     // TODO - would be better to select a set of compatiable options from all sliceCodes
     if(index>1){
@@ -119,6 +124,9 @@ void MultiCM::transformToOptionsList(Schedule& schedule)
       std::regex reg("::+");
       sliceCode=std::regex_replace(sliceCode,reg,":");
     }
+#else
+    NOT_IMPLEMENTED;
+#endif
 
     //decode slice
     cout << "decoding " << sliceCode << endl;
