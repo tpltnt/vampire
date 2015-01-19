@@ -3,7 +3,7 @@
  * Implements class MultiCM.
  */
 
-#define USE_THIS 0
+#define USE_THIS 1
 
 #if USE_THIS
 #include <regex>
@@ -86,12 +86,16 @@ void MultiCM::transformToOptionsList(Schedule& schedule)
 {
   CALL("MultiCM::transformToOptionsList");
 
+  cout << "start" << endl;
+
   //For each strategy we create an option object in the optionsList
   //Need to ensure additional global options are dealt with appropriately
   //Currently all global options are copied but overriden with those in the strategy 
   
   // save the original options that are about to be deleted
-  Options orig_opt = *env->options;
+  const Options* orig_opt = env->options;
+  ASS(orig_opt);
+  cout << orig_opt->problemName() << endl;
 
   //Replace options list
   unsigned strategies = schedule.size(); 
@@ -99,6 +103,8 @@ void MultiCM::transformToOptionsList(Schedule& schedule)
   cout << "creating with " << strategies << " strategies" << endl;
   env->optionsList = SmartPtr<OptionsList>(new OptionsList(strategies));
   env -> options = &((*env->optionsList)[0]);
+
+  cout << "one" << endl;
 
   unsigned index=0;
   Schedule::BottomFirstIterator sit(schedule);
@@ -109,12 +115,12 @@ void MultiCM::transformToOptionsList(Schedule& schedule)
     Options& opt = (*env->optionsList)[index++];
 
     // copy orig
-    opt = orig_opt;    
-
+    opt = *orig_opt;    
 #if USE_THIS
     // Remove preprocessing from all but the first sliceCode
     // TODO - would be better to select a set of compatiable options from all sliceCodes
     if(index>1){
+      BYPASSING_ALLOCATOR; // required becuase of use of std::regex, TODO remove?
       int max=9;
       vstring sn[max] = {"fde","gsp","updr","sd","sgt","ss","st","nm","ins"};
       for(int i=0;i<max;i++){
@@ -128,6 +134,8 @@ void MultiCM::transformToOptionsList(Schedule& schedule)
     NOT_IMPLEMENTED;
 #endif
 
+   cout << "two" << endl;
+
     //decode slice
     cout << "decoding " << sliceCode << endl;
     opt.set("ignore_missing","on");
@@ -138,7 +146,9 @@ void MultiCM::transformToOptionsList(Schedule& schedule)
     if(stl){
       opt.setSimulatedTimeLimit(int(stl * SLOWNESS));
     }
+    cout << "endWhile" << endl;
   }
+    cout << "end" << endl;
 
 }
 
