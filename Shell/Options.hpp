@@ -715,6 +715,7 @@ public:
   Sos sos() const { return _sos; }
   void setSos(Sos newVal) { _sos = newVal; }
   FunctionDefinitionElimination functionDefinitionElimination() const { return _functionDefinitionElimination; }
+  void setFunctionDefinitionElimination(FunctionDefinitionElimination e){ _functionDefinitionElimination=e;}
   bool outputAxiomNames() const { return _outputAxiomNames; }
   void setOutputAxiomNames(bool newVal) { _outputAxiomNames = newVal; }
   QuestionAnsweringMode questionAnswering() const { return _questionAnswering; }
@@ -734,6 +735,7 @@ public:
   void setInterpretedSimplification(bool val) { _interpretedSimplification = val; }
   Condensation condensation() const { return _condensation; }
   RuleActivity generalSplitting() const { return _generalSplitting; }
+  void setGeneralSplitting(RuleActivity ra){ _generalSplitting=ra;}
   vstring namePrefix() const { return _namePrefix; }
   bool timeStatistics() const { return _timeStatistics; }
 //  bool splitAddGroundNegation() const { return _splitAddGroundNegation; }

@@ -34,18 +34,24 @@ SaturationAlgorithmContext::SaturationAlgorithmContext(Problem& prb, Options& op
 
 	AutoSwitch s(this);
 	SaturationAlgorithm* sa = SaturationAlgorithm::createFromOptions(*_prb, opts);
+        ASS(sa);
 	_ml = sa;
-	_splitter = static_cast<SSplitter*>(sa -> splitter());//[dmitry] TODO: Merge Splitter and SSplitter and remove this cast
-	if(!_branchSelectorInitialised){
-		//_sat2fo = SAT2FO();
-		//_branchSelector = SSplittingBranchSelector(&_sat2fo);
-		_branchSelector.init(opts);
-		_branchSelectorInitialised = true;
-	}
-	_splitter -> setBranchSelector(&_branchSelector);
-	_splitter -> setComponentIndex(&_componentIdx);
-	_splitter -> setSAT2FO(&_sat2fo);
-	_splitter -> setComponentNames(&_compNames);
+	// splitter is only set of splitting is on in the options
+        if(sa->splitter()){
+		_splitter = static_cast<SSplitter*>(sa -> splitter());
+		//[dmitry] TODO: Merge Splitter and SSplitter and remove this cast
+		//[giles] this merge will happen when we rebase on master
+		if(!_branchSelectorInitialised){
+			//_sat2fo = SAT2FO();
+			//_branchSelector = SSplittingBranchSelector(&_sat2fo);
+			_branchSelector.init(opts);
+			_branchSelectorInitialised = true;
+		}
+		_splitter -> setBranchSelector(&_branchSelector);
+		_splitter -> setComponentIndex(&_componentIdx);
+		_splitter -> setSAT2FO(&_sat2fo);
+  		_splitter -> setComponentNames(&_compNames);
+        }
 }
 
 SaturationAlgorithmContext::~SaturationAlgorithmContext() {

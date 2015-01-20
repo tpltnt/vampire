@@ -1321,7 +1321,7 @@ SaturationAlgorithm* SaturationAlgorithm::createFromOptions(Problem& prb, const 
     res=new Otter(prb, opt);
     break;
   default:
-    NOT_IMPLEMENTED;
+    ASSERTION_VIOLATION_REP(opt.saturationAlgorithm());
   }
   if (indexMgr) {
     res->_imgr = SmartPtr<IndexManager>(indexMgr, true);

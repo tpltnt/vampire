@@ -3,17 +3,12 @@
  * Implements class MultiCM.
  */
 
-#define USE_THIS 1
-
-#if USE_THIS
-#include <regex>
-#endif
-
 #include "Forwards.hpp"
 
 #include "Lib/Environment.hpp"
 #include "Shell/UIHelper.hpp"
 #include "Shell/Preprocess.hpp"
+#include "Shell/Options.hpp"
 
 #include "Kernel/MainLoopScheduler.hpp"
 #include "Kernel/MainLoop.hpp"
@@ -86,8 +81,6 @@ void MultiCM::transformToOptionsList(Schedule& schedule)
 {
   CALL("MultiCM::transformToOptionsList");
 
-  cout << "start" << endl;
-
   //For each strategy we create an option object in the optionsList
   //Need to ensure additional global options are dealt with appropriately
   //Currently all global options are copied but overriden with those in the strategy 
@@ -95,7 +88,6 @@ void MultiCM::transformToOptionsList(Schedule& schedule)
   // save the original options that are about to be deleted
   const Options* orig_opt = env->options;
   ASS(orig_opt);
-  cout << orig_opt->problemName() << endl;
 
   //Replace options list
   unsigned strategies = schedule.size(); 
@@ -104,7 +96,6 @@ void MultiCM::transformToOptionsList(Schedule& schedule)
   env->optionsList = SmartPtr<OptionsList>(new OptionsList(strategies));
   env -> options = &((*env->optionsList)[0]);
 
-  cout << "one" << endl;
 
   unsigned index=0;
   Schedule::BottomFirstIterator sit(schedule);
@@ -116,39 +107,39 @@ void MultiCM::transformToOptionsList(Schedule& schedule)
 
     // copy orig
     opt = *orig_opt;    
-#if USE_THIS
-    // Remove preprocessing from all but the first sliceCode
-    // TODO - would be better to select a set of compatiable options from all sliceCodes
-    if(index>1){
-      BYPASSING_ALLOCATOR; // required becuase of use of std::regex, TODO remove?
-      int max=9;
-      vstring sn[max] = {"fde","gsp","updr","sd","sgt","ss","st","nm","ins"};
-      for(int i=0;i<max;i++){
-        std::regex reg(sn[i]+"=[^:]*");
-        sliceCode = std::regex_replace(sliceCode,reg,"");
-      }
-      std::regex reg("::+");
-      sliceCode=std::regex_replace(sliceCode,reg,":");
-    }
-#else
-    NOT_IMPLEMENTED;
-#endif
-
-   cout << "two" << endl;
 
     //decode slice
     cout << "decoding " << sliceCode << endl;
     opt.set("ignore_missing","on");
     opt.set("decode",sliceCode);
 
+    // Remove preprocessing from all but the first sliceCode
+    // TODO - would be better to select a set of compatiable options from all sliceCodes
+    if(index>1){
+      //int max=9;
+      //vstring sn[max] = {"fde","gsp","updr","sd","sgt","ss","st","nm","ins"};
+      //for(int i=0;i<max;i++){
+        //Options::AbstractOptionValue* ov = orig->getOptionValueByName(sn[i]);
+        //opt.setShort(sn[i],ov->getStringOfActual());
+      //}
+      opt.setFunctionDefinitionElimination(orig_opt->functionDefinitionElimination());
+      opt.setGeneralSplitting(orig_opt->generalSplitting());
+      opt.set("unused_predicate_definition_removal",orig_opt->unusedPredicateDefinitionRemoval()?"on":"off");
+      opt.set("sine_depth",Lib::Int::toString(orig_opt->sineDepth()));
+      opt.set("sine_generality_threshold",Lib::Int::toString(orig_opt->sineGeneralityThreshold()));
+      opt.setSineSelection(orig_opt->sineSelection());
+      opt.set("sine_tolerance",Lib::Int::toString(orig_opt->sineTolerance()));
+      opt.set("naming",Lib::Int::toString(orig_opt->naming()));
+      opt.set("inequality_splitting",Lib::Int::toString(orig_opt->inequalitySplitting()));
+      //TODO others?
+    }
+
     //Slowdown simulated time limit for use in LRS
     int stl = opt.simulatedTimeLimit();
     if(stl){
       opt.setSimulatedTimeLimit(int(stl * SLOWNESS));
     }
-    cout << "endWhile" << endl;
   }
-    cout << "end" << endl;
 
 }
 
