@@ -145,8 +145,7 @@ void IGAlgorithm::init()
 
     _saturationOptions = _opt;
     _saturationOptions.setSaturationAlgorithm(Options::OTTER);
-//    _saturationOptions.setPropositionalToBDD(false);
-//    _saturationOptions.setSplitting(Options::SM_OFF);
+    _saturationOptions.setSplitting(false);
     _saturationAlgorithm = SaturationAlgorithm::createFromOptions(*_saturationProblem, _saturationOptions, _saturationIndexManager.ptr());
 
     //we will watch what clauses are derived in the

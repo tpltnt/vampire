@@ -581,6 +581,7 @@ private:
     unsigned h1=computeHash<Hash1>(key, _capacity);
     int pos=h1%_capacity;
     Entry* res=&_entries[pos];
+    ASS(res);
     if(res->_info.timestamp != _timestamp ) {
       return 0;
     }

@@ -33,9 +33,12 @@ MainLoopContext* MainLoopScheduler::createContext(Problem& prb, Options& opt) {
 	switch (opt.saturationAlgorithm()) {
 	  case Options::INST_GEN:
 		return new IGAlgorithmContext(prb, opt);
-		break;
-	  default:
+	  case Options::OTTER:
+	  case Options::DISCOUNT:
+	  case Options::LRS:
 		return new SaturationAlgorithmContext(prb, opt);
+	  default:
+		ASSERTION_VIOLATION;
 	}
 }
 

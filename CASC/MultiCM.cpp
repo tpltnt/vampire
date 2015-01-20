@@ -91,6 +91,11 @@ void MultiCM::transformToOptionsList(Schedule& schedule)
 
   //Replace options list
   unsigned strategies = schedule.size(); 
+
+  //We will filter out tabulation, so count the number
+  Schedule::Iterator tit(schedule);
+  while(tit.hasNext()){ if(tit.next().find("tab")==0) strategies--;} 
+
   ASS(strategies>0);
   cout << "creating with " << strategies << " strategies" << endl;
   env->optionsList = SmartPtr<OptionsList>(new OptionsList(strategies));
@@ -101,6 +106,8 @@ void MultiCM::transformToOptionsList(Schedule& schedule)
   Schedule::BottomFirstIterator sit(schedule);
   while(sit.hasNext()){
     vstring sliceCode = sit.next();
+
+    if(sliceCode.find("tab")==0) continue;
 
     // get the option
     Options& opt = (*env->optionsList)[index++];
@@ -133,6 +140,8 @@ void MultiCM::transformToOptionsList(Schedule& schedule)
       opt.set("inequality_splitting",Lib::Int::toString(orig_opt->inequalitySplitting()));
       //TODO others?
     }
+
+    ASS(opt.saturationAlgorithm()!=Options::TABULATION);
 
     //Slowdown simulated time limit for use in LRS
     int stl = opt.simulatedTimeLimit();
