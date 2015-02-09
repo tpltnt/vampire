@@ -98,7 +98,8 @@ MainLoopResult MainLoopScheduler::run() {
 					if( (e.result.terminationReason == Statistics::SATISFIABLE) ||
 							exausted()){
 						result =  &e.result;
-						cout << "Strategy " << _mlcl[k] -> _id << " found result" << endl;
+						cout << "Satisfiable found" << endl;
+						cout << "Strategy " << _mlcl[k] -> _id << " found result in " << _mlcl[k]->elapsed() << endl;
 						break;
 					}
 				}
@@ -108,7 +109,7 @@ MainLoopResult MainLoopScheduler::run() {
 	}catch(MainLoop::RefutationFoundException& rs) {
 		result = new MainLoopResult(Statistics::REFUTATION, rs.refutation);
 		cout << "Refutation found " << endl;
-		cout << "Strategy " << _mlcl[k] -> _id << " found result" << endl;
+		cout << "Strategy " << _mlcl[k] -> _id << " found result in " << _mlcl[k]->elapsed() << endl;
 	}
 	catch(TimeLimitExceededException&) {//We catch this since SaturationAlgorithm::doUnproceessedLoop throws it
 		result = new MainLoopResult(Statistics::TIME_LIMIT);
