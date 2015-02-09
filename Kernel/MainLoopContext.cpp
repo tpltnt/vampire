@@ -20,16 +20,12 @@ using Lib::Timer;
 using Shell::Options;
 using Shell::Statistics;
 
-#if VDEBUG
 unsigned int MainLoopContext::id_counter = 0;
-#endif //VDEBUG
 
 MainLoopContext* MainLoopContext::currentContext = 0;
 
 	MainLoopContext::MainLoopContext(Problem& prb, Options& opts):
-#if VDEBUG
 			_id(id_counter++),
-#endif
             _opts(opts), _startTime(0), _elapsed(0), _initialised(false), _steps(0) {
 
 		CALL("MainLoopContext::MainLoopContext");

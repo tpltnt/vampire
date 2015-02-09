@@ -69,10 +69,11 @@ MainLoopResult MainLoopScheduler::run() {
 #endif //VDEBUG
 
 	MainLoopResult* result = 0;
+	size_t k = 0;
 	try {
 
 		while(!result){
-			for(size_t k = 0; k < _capacity; k++) {
+			for(k=0; k < _capacity; k++) {
 				try{
 					if(_mlcl[k]){
 						contextStep(k);
@@ -93,9 +94,8 @@ MainLoopResult MainLoopScheduler::run() {
 						break;
 					}
 				}catch(MainLoop::MainLoopFinishedException& e) {
-#if VDEBUG
+					cout << "Satisfiable found " << endl;
 					cout << "Strategy " << _mlcl[k] -> _id << " found result" << endl;
-#endif //VDEBUG
 					deleteContext(k);
 					if( (e.result.terminationReason == Statistics::SATISFIABLE) ||
 							exausted()){
@@ -108,6 +108,8 @@ MainLoopResult MainLoopScheduler::run() {
 		//Should only be here if result set
 	}catch(MainLoop::RefutationFoundException& rs) {
 		result = new MainLoopResult(Statistics::REFUTATION, rs.refutation);
+		cout << "Refutation found " << endl;
+		cout << "Strategy " << _mlcl[k] -> _id << " found result" << endl;
 	}
 	catch(TimeLimitExceededException&) {//We catch this since SaturationAlgorithm::doUnproceessedLoop throws it
 		result = new MainLoopResult(Statistics::TIME_LIMIT);
@@ -138,7 +140,9 @@ MainLoopScheduler::~MainLoopScheduler() {
 	for(size_t k = 0; k < _capacity; k++) {
 		if(_mlcl[k]){
                         ASS(_mlcl[k]);
+#if VDEBUG
                         cout << "deleting " << _mlcl[k] << endl;
+#endif
 			delete _mlcl[k]; //TODO: should be DEALLOC_UNKNOWN but SaturationAlgorithm::createFromOptions allocates via "new"
 		}
 	}

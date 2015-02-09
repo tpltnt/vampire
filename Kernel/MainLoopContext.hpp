@@ -22,9 +22,7 @@ namespace Kernel {
 class MainLoopContext {
 public:
 	MainLoopContext(Problem& prb, Shell::Options& opts);
-#if VDEBUG
 	const unsigned _id;
-#endif
 
        CLASS_NAME(MainLoopContext);
        USE_ALLOCATOR(MainLoopContext);
@@ -84,9 +82,7 @@ protected:
 	const Shell::Options& _opts;
 	Problem* _prb;
 private:
-#if VDEBUG
         static unsigned id_counter;
-#endif
 	Lib::Environment* _env;
 	Lib::Environment* _temp_env; //A variable to preserve the current environment before switching in.
 								 //TODO: a manager pattern for main loops needs to be implemented for context switching
