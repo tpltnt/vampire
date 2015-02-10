@@ -94,14 +94,15 @@ MainLoopResult MainLoopScheduler::run() {
 						break;
 					}
 				}catch(MainLoop::MainLoopFinishedException& e) {
-					deleteContext(k);
 					if( (e.result.terminationReason == Statistics::SATISFIABLE) ||
 							exausted()){
 						result =  &e.result;
 						cout << "Satisfiable found" << endl;
 						cout << "Strategy " << _mlcl[k] -> _id << " found result in " << _mlcl[k]->elapsed() << endl;
+						deleteContext(k);
 						break;
 					}
+					deleteContext(k);
 				}
 			}
 		}
