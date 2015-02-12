@@ -137,7 +137,7 @@ private:
 		CALL("MainLoopScheduler::contextStep");
 		ASS_L(k,_capacity);
 		_mlcl[k] -> doStep(_maxTimeSlice);
-		timeSliceMagic(k);
+//		timeSliceMagic(k); //TODO: [dmitry] Perhaps, we would return to this scheduling scheme
 
 	}
 

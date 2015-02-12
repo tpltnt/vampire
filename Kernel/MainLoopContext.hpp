@@ -63,6 +63,16 @@ public:
 		return (_elapsed / _steps);
 	}
 
+/*	inline
+	bool withinTimeBudget() const {
+		return _elapsed < _timeBudget;
+	}
+
+	inline
+	void addTimeBudget(unsigned int budget){
+		_timeBudget += budget;
+	}*/
+
 protected:
 	// Switch into this context
 	void switchIn();
@@ -86,7 +96,7 @@ private:
 	Lib::Environment* _env;
 	Lib::Environment* _temp_env; //A variable to preserve the current environment before switching in.
 								 //TODO: a manager pattern for main loops needs to be implemented for context switching
-	unsigned int _startTime, _elapsed;
+	unsigned int _startTime, _elapsed, _timeBudget;
 
 	bool _initialised;
 

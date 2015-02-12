@@ -26,7 +26,7 @@ MainLoopContext* MainLoopContext::currentContext = 0;
 
 	MainLoopContext::MainLoopContext(Problem& prb, Options& opts):
 			_id(id_counter++),
-            _opts(opts), _startTime(0), _elapsed(0), _initialised(false), _steps(0) {
+            _opts(opts), _startTime(0), _elapsed(0), _timeBudget(0), _initialised(false), _steps(0) {
 
 		CALL("MainLoopContext::MainLoopContext");
 
@@ -119,6 +119,36 @@ MainLoopContext* MainLoopContext::currentContext = 0;
 	void MainLoopContext::doStep(unsigned int timeSlice) {
 		CALL("MainLoopContext::doStep");
 
+		_timeBudget += timeSlice;
+		if(_elapsed >= _timeBudget) return;
+
+		if(!_initialised) init(); //Lazy initialisation in order to work with huge number of contexts
+
+#if VDEBUG
+		cout << "Doing steps in context " <<  _id << " within time slice " << timeSlice << " msec" << endl;
+#endif //VDEBUG
+
+		AutoSwitch s(this);
+		do{//ensures at least one step
+			_ml -> doOneAlgorithmStep();
+
+#if VDEBUG
+		cout << "Finished step " << _steps << " in context " <<  _id << endl;
+#endif //VDEBUG
+
+			_steps++;
+			_env -> checkAllTimeLimits();
+		}while(_elapsed < _timeBudget);
+#if VDEBUG
+		cout << "Average time " << averageTimeSlice() << " msec per step" << endl;
+#endif //VDEBUG
+
+	}
+
+/*//TODO: [dmitry] Perhaps, we would return to this scheduling scheme
+	void MainLoopContext::doStep(unsigned int timeSlice) {
+		CALL("MainLoopContext::doStep");
+
 		const int end = _env -> timer -> elapsedMilliseconds() + timeSlice;
 
 		if(!_initialised) init(); //Lazy initialisation in order to work with huge number of contexts
@@ -143,6 +173,9 @@ MainLoopContext* MainLoopContext::currentContext = 0;
 #endif //VDEBUG
 
 	}
+
+ */
+
 
 	unsigned int MainLoopContext::updateTimeCounter() {
 		const unsigned int endTime = _env->timer->elapsedMilliseconds();

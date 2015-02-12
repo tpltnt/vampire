@@ -43,7 +43,7 @@ MainLoopContext* MainLoopScheduler::createContext(Problem& prb, Options& opt) {
 }
 
 MainLoopScheduler::MainLoopScheduler(Problem& prb, size_t capacity):
-		_prb(prb), _capacity(capacity), _contextCounter(0), _maxTimeSlice(0) {
+		_prb(prb), _capacity(capacity), _contextCounter(0), _maxTimeSlice(1/*0*/) {
 	  CALL("MainLoopScheduler::MainLoopScheduler");
 	  ASS_G(_capacity, 0);
 
