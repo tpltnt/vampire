@@ -160,7 +160,8 @@ private:
 
 	}
 
-	unsigned int _maxTimeSlice, _nmts;
+	unsigned int _maxTimeSlice, _nmts, _cycleCount;
+	static const unsigned int _cycleThreshold;
 };
 
 } /* namespace Kernel */

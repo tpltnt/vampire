@@ -27,6 +27,8 @@ using Shell::Options;
 using Shell::OptionsList;
 using Shell::Preprocess;
 
+const unsigned int MainLoopScheduler::_cycleThreshold = 1024;
+
 MainLoopContext* MainLoopScheduler::createContext(Problem& prb, Options& opt) {
 	CALL("MainLoopScheduler::createContext");
 
@@ -43,7 +45,7 @@ MainLoopContext* MainLoopScheduler::createContext(Problem& prb, Options& opt) {
 }
 
 MainLoopScheduler::MainLoopScheduler(Problem& prb, size_t capacity):
-		_prb(prb), _capacity(capacity), _contextCounter(0), _maxTimeSlice(1/*0*/) {
+		_prb(prb), _capacity(capacity), _contextCounter(0), _maxTimeSlice(1/*0*/), _cycleCount(0) {
 	  CALL("MainLoopScheduler::MainLoopScheduler");
 	  ASS_G(_capacity, 0);
 
@@ -104,6 +106,11 @@ MainLoopResult MainLoopScheduler::run() {
 					}
 					deleteContext(k);
 				}
+			}
+			_cycleCount++;
+			if(_cycleCount > _cycleThreshold){
+				_cycleCount = 0;
+				_maxTimeSlice <<=1;
 			}
 		}
 		//Should only be here if result set
