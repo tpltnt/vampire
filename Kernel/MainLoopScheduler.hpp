@@ -138,7 +138,17 @@ private:
 		ASS_L(k,_capacity);
 		_mlcl[k] -> doStep(_maxTimeSlice);
 //		timeSliceMagic(k); //TODO: [dmitry] Perhaps, we would return to this scheduling scheme
-
+//#if VDEBUG
+//		std::cout << "Context step finished." << std::endl;
+//#endif
+		const unsigned int avgTime = _mlcl[k] -> averageTimeSlice();
+//#if VDEBUG
+//		std::cout << "#Context step finished." << std::endl;
+//#endif
+		if(_minTimeSlice > avgTime) _minTimeSlice = avgTime;
+//#if VDEBUG
+//		std::cout << "##Context step finished." << std::endl;
+//#endif
 	}
 
 	inline
@@ -160,7 +170,7 @@ private:
 
 	}
 
-	unsigned int _maxTimeSlice, _nmts, _cycleCount;
+	unsigned int _maxTimeSlice, _minTimeSlice, _nmts, _cycleCount;
 	static const unsigned int _cycleThreshold;
 };
 

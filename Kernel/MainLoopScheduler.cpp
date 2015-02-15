@@ -7,6 +7,8 @@
 
 #include "MainLoopScheduler.hpp"
 
+#include <climits>
+
 #include "Kernel/MainLoop.hpp"
 #include "Kernel/MainLoopContext.hpp"
 #include "Lib/Timer.hpp"
@@ -45,7 +47,7 @@ MainLoopContext* MainLoopScheduler::createContext(Problem& prb, Options& opt) {
 }
 
 MainLoopScheduler::MainLoopScheduler(Problem& prb, size_t capacity):
-		_prb(prb), _capacity(capacity), _contextCounter(0), _maxTimeSlice(1/*0*/), _cycleCount(0) {
+		_prb(prb), _capacity(capacity), _contextCounter(0), _maxTimeSlice(1/*0*/), _minTimeSlice(INT_MAX), _cycleCount(0) {
 	  CALL("MainLoopScheduler::MainLoopScheduler");
 	  ASS_G(_capacity, 0);
 
@@ -112,6 +114,8 @@ MainLoopResult MainLoopScheduler::run() {
 				_cycleCount = 0;
 				_maxTimeSlice <<=1;
 			}
+			if(_maxTimeSlice < _minTimeSlice) _maxTimeSlice =_minTimeSlice;
+			_minTimeSlice = INT_MAX;
 		}
 		//Should only be here if result set
 	}catch(MainLoop::RefutationFoundException& rs) {

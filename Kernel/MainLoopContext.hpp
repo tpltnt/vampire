@@ -60,7 +60,8 @@ public:
 
 	inline
 	unsigned int averageTimeSlice() const {
-		return (_elapsed / _steps);
+		//const unsigned int timeSlice = _elapsed / _steps;
+		return (_steps > 0 &&_elapsed > _steps)? (_elapsed /_steps): 1;
 	}
 
 /*	inline
