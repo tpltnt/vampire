@@ -11,7 +11,7 @@
 #if VDEBUG
 
 #include "Lib/Allocator.hpp"
-#include "Lib/Environment.hpp"
+//#include "Lib/Environment.hpp"
 #include "Lib/Timer.hpp"
 #include "Shell/Options.hpp"
 

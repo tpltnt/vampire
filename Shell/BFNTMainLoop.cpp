@@ -43,6 +43,9 @@
 
 namespace Shell
 {
+
+using Lib::Sys::Multiprocessing;
+
 #if COMPILER_MSVC
 
 BFNTMainLoop::BFNTMainLoop(Problem& prb, const Options& opt)

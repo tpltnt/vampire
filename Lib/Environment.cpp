@@ -5,6 +5,8 @@
  * @since 06/05/2007 Manchester
  */
 
+#include "Environment.hpp"
+
 #include "Debug/Tracer.hpp"
 
 #include "Lib/Sys/SyncPipe.hpp"
@@ -21,8 +23,6 @@
 
 #include "Timer.hpp"
 
-#include "Environment.hpp"
-
 namespace Lib
 {
 
@@ -30,6 +30,8 @@ using namespace std;
 using namespace Kernel;
 using namespace Indexing;
 using namespace Shell;
+
+using Lib::Sys::SyncPipe;
 
 #if COMPIT_GENERATOR
 struct nullstream:

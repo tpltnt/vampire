@@ -16,10 +16,12 @@
 #include "Lib/SmartPtr.hpp"
 #include "Shell/OptionsList.hpp"
 
+//#include "Kernel/MainLoopScheduler.hpp"
+
 namespace Lib {
 
-using namespace std;
-using namespace Sys;
+//using namespace std;
+//using namespace Sys;
 
 /**
  * Class Environment.
@@ -59,13 +61,13 @@ public:
   bool haveOutput();
   void beginOutput();
   void endOutput();
-  ostream& out();
+  std::ostream& out();
 
-  void setPipeOutput(SyncPipe* pipe);
-  SyncPipe* getOutputPipe() { return _pipe; }
+  void setPipeOutput(Sys::SyncPipe* pipe);
+  Sys::SyncPipe* getOutputPipe() { return _pipe; }
 
-  void setPriorityOutput(ostream* stm);
-  ostream* getPriorityOutput() { return _priorityOutput; }
+  void setPriorityOutput(std::ostream* stm);
+  std::ostream* getPriorityOutput() { return _priorityOutput; }
 
   bool timeLimitReached() const;
 
@@ -74,6 +76,14 @@ public:
 		  throw TimeLimitExceededException();
 	  }
   }
+
+/*  inline static const std::size_t numberOfAliveContexts() {
+	  return Kernel::MainLoopScheduler::scheduler->numberOfAliveContexts();
+  }
+
+  inline static const std::size_t numberOfContexts() {
+  	  return Kernel::MainLoopScheduler::scheduler->numberOfContexts();
+  }*/
 
   void checkAllTimeLimits() const;
 
@@ -106,8 +116,8 @@ public:
 private:
   int _outputDepth;
   /** if non-zero, all output will go here */
-  ostream* _priorityOutput;
-  SyncPipe* _pipe;
+  std::ostream* _priorityOutput;
+  Sys::SyncPipe* _pipe;
 }; // class Environment
 
 extern Environment* env;

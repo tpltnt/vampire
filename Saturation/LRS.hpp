@@ -3,7 +3,6 @@
  * Defines class LRS.
  */
 
-
 #ifndef __LRS__
 #define __LRS__
 

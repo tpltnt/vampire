@@ -31,6 +31,8 @@ using Shell::Preprocess;
 
 const unsigned int MainLoopScheduler::_cycleThreshold = 1024;
 
+const MainLoopScheduler* MainLoopScheduler::scheduler;
+
 MainLoopContext* MainLoopScheduler::createContext(Problem& prb, Options& opt) {
 	CALL("MainLoopScheduler::createContext");
 
@@ -54,6 +56,7 @@ MainLoopScheduler::MainLoopScheduler(Problem& prb, size_t capacity):
 	  _mlcl = static_cast<MainLoopContext**>(
 	  		  ALLOC_KNOWN(sizeof(MainLoopContext*)*_capacity,"MainLoopContext*"));
 	  for(size_t k = 0; k < _capacity; k++) _mlcl[k] = 0;
+	  scheduler = this;
 }
 
 MainLoopScheduler::MainLoopScheduler(Problem& prb, OptionsList& opts, std::size_t capacity):

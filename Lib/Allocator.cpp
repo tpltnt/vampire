@@ -72,7 +72,7 @@ unsigned watchAddressLastValue = 0;
 #include "MemoryLeak.hpp"
 #endif
 
-using namespace Lib;
+//using namespace Lib;
 using namespace Shell;
 
 int Allocator::_initialised = 0;
