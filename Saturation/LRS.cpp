@@ -9,6 +9,8 @@
 #include "Lib/VirtualIterator.hpp"
 #include "Kernel/Clause.hpp"
 #include "Kernel/LiteralSelector.hpp"
+#include "Kernel/MainLoopContext.hpp"
+#include "Kernel/MainLoopScheduler.hpp"
 #include "Shell/Statistics.hpp"
 #include "Shell/Options.hpp"
 
@@ -79,28 +81,47 @@ long long LRS::estimatedReachableCount()
 {
   CALL("LRS::estimatedReachableCount");
 
-  long long processed=env -> statistics->activeClauses;
-  int currTime=env -> timer->elapsedMilliseconds();
-  long long timeSpent=currTime-_startTime;
+  //int currTime=env -> timer->elapsedMilliseconds();
+  long long globalTimeSpent= env->timer->elapsedMilliseconds();
+  long long localTimeSpent= Kernel::MainLoopContext::currentContext-> updateTimeCounter(); //currTime-_startTime;
   //the result is in miliseconds, as _opt.lrsFirstTimeCheck() is in percents.
-  int firstCheck=_opt.lrsFirstTimeCheck()*_opt.timeLimitInDeciseconds();
+
+  unsigned int localFirstCheck=_opt.lrsFirstTimeCheck()*_opt.localTimeLimitInDeciseconds();
+  unsigned int globalFirstCheck=_opt.lrsFirstTimeCheck()*_opt.timeLimitInDeciseconds();
 //  int timeSpent=currTime;
 
-  if(timeSpent<firstCheck ) {
+  if(localTimeSpent < localFirstCheck && globalTimeSpent < globalFirstCheck) {
     return -1;
   }
 
-  long long timeLeft;
+  long long globalTimeLeft;
+  long long localTimeLeft;
   if(_opt.simulatedTimeLimit()) {
-    timeLeft=_opt.simulatedTimeLimit()*100 - currTime;
+    localTimeLeft = _opt.simulatedTimeLimit()*100 - localTimeSpent;
+    globalTimeLeft = localTimeLeft;
   } else {
-    timeLeft=_opt.timeLimitInDeciseconds()*100 - currTime;
+    globalTimeLeft = (_opt.timeLimitInDeciseconds()*100 - globalTimeSpent ) / Kernel::MainLoopScheduler::scheduler -> numberOfAliveContexts();//Rough estimate based on fair scheduling
+    localTimeLeft = _opt.localTimeLimitInDeciseconds()*100 - localTimeSpent;
   }
-  if(timeLeft<=0 || processed<=10) {
-    //we end-up here even if there is no time timit (i.e. time limit is set to 0)
+
+  if(localTimeLeft <= 0){
+	  if(globalTimeLeft <=0){
+		  //we end-up here even if there is no time timit (i.e. time limit is set to 0)
+		  return -1;
+	  }else{
+		  localTimeLeft = globalTimeLeft;
+	  }
+  }else{
+	 if(globalTimeLeft > 0 && globalTimeLeft < localTimeLeft){
+	  	  localTimeLeft = globalTimeLeft;
+	 }
+  }
+
+  long long processed=env -> statistics-> activeClauses;
+  if(processed <= 10) {
     return -1;
   }
-  return (processed*timeLeft)/timeSpent;
+  return (processed * localTimeLeft) / localTimeSpent;
 }
 
 }

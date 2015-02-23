@@ -124,7 +124,7 @@ private:
 
   pid_t writerChildPid;
   /** pipe for collecting the output from children */
-  SyncPipe childOutputPipe;
+  Lib::Sys::SyncPipe childOutputPipe;
 };
 
 #endif //!COMPILER_MSVC

@@ -80,6 +80,17 @@ public:
 	    }
 	}
 
+	inline
+	const std::size_t numberOfAliveContexts() const {
+		return _contextCounter;
+	}
+
+	inline
+	const std::size_t numberOfContexts() const {
+		return _capacity;
+	}
+
+    static const MainLoopScheduler* scheduler;
 
 protected:
 
@@ -151,7 +162,7 @@ private:
 //#endif
 	}
 
-	inline
+/*	inline
 	void timeSliceMagic(const std::size_t k){
 		CALL("MainLoopScheduler::timeSliceMagic");
 
@@ -168,9 +179,9 @@ private:
 			}
 		}
 
-	}
+	}*/
 
-	unsigned int _maxTimeSlice, _minTimeSlice, _nmts, _cycleCount;
+	unsigned int _maxTimeSlice, _minTimeSlice, /*_nmts,*/ _cycleCount;
 	static const unsigned int _cycleThreshold;
 };
 

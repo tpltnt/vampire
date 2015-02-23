@@ -18,7 +18,6 @@
 
 namespace Kernel {
 
-
 class MainLoopContext {
 public:
 	MainLoopContext(Problem& prb, Shell::Options& opts);
@@ -102,6 +101,7 @@ private:
 	bool _initialised;
 
 	unsigned int _steps;
+
 };
 
 } /* namespace Kernel */
