@@ -127,6 +127,7 @@ MainLoopResult MainLoopScheduler::run() {
 		cout << "Strategy " << _mlcl[k] -> _id << " found result in " << _mlcl[k]->elapsed() << endl;
 	}
 	catch(TimeLimitExceededException&) {//We catch this since SaturationAlgorithm::doUnproceessedLoop throws it
+		cout << "Global time limit " << endl;
 		result = new MainLoopResult(Statistics::TIME_LIMIT);
 	}
 	catch(MemoryLimitExceededException&) {
@@ -141,36 +142,29 @@ MainLoopResult MainLoopScheduler::run() {
 	Lib::Timer::setTimeLimitEnforcement(false);
 	result -> updateStatistics();
 
+	clearAll();
 	return *result;
 }
 
 MainLoopScheduler::~MainLoopScheduler() {
 
 	CALL("MainLoopScheduler::~MainLoopScheduler()");
+	clearAll();
+	DEALLOC_KNOWN(_mlcl, sizeof(MainLoopContext*)*_capacity, "MainLoopContext*");
+}
 
-#if VDEBUG
-		cout << "Deleting scheduler" << endl;
-#endif //VDEBUG
+void MainLoopScheduler::clearAll(){
 
+
+	cout << "Clearing " << _capacity << endl;
 	for(size_t k = 0; k < _capacity; k++) {
 		if(_mlcl[k]){
                         ASS(_mlcl[k]);
-#if VDEBUG
-                        cout << "deleting " << _mlcl[k] << endl;
-#endif
-			delete _mlcl[k]; //TODO: should be DEALLOC_UNKNOWN but SaturationAlgorithm::createFromOptions allocates via "new"
+			delete _mlcl[k]; 
+			_mlcl[k]=0;
+        //TODO: should be DEALLOC_UNKNOWN but SaturationAlgorithm::createFromOptions allocates via "new"
 		}
 	}
-#if VDEBUG
-        cout << "Deleted all remaining contexts" << endl;
-#endif
-
-	DEALLOC_KNOWN(_mlcl, sizeof(MainLoopContext*)*_capacity, "MainLoopContext*");
-
-#if VDEBUG
-        cout << "Deallocated memory for contexts" << endl;
-#endif
-
 }
 
 }

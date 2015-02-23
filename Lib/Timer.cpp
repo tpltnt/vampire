@@ -80,6 +80,7 @@ void Lib::Timer::deinitializeTimer()
 #include "Lib/Sys/Multiprocessing.hpp"
 
 #include "Shell/UIHelper.hpp"
+#include "Kernel/MainLoopScheduler.hpp"
 
 int timer_sigalrm_counter=-1;
 
@@ -110,6 +111,7 @@ void timeLimitReached()
   }
   env -> endOutput();
 
+  delete Kernel::MainLoopScheduler::scheduler;
   System::terminateImmediately(1);
 }
 

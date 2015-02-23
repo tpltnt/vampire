@@ -125,6 +125,7 @@ private:
 		ASS_GE(_contextCounter,0);
 		ASS_LE(_contextCounter,_capacity);
 	}
+	void clearAll();
 
 	inline
 	void addContext(const std::size_t k){
