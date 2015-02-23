@@ -112,7 +112,7 @@ MainLoopContext* MainLoopContext::currentContext = 0;
 #endif //VDEBUG
 
 		AutoSwitch s(this);
-		_env -> statistics -> phase = Statistics::FINALIZATION;
+		cout << "Strategy " << _id << " finished after using " << _elapsed << endl;
 		_initialised = false;
 	}
 
