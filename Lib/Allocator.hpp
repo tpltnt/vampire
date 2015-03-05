@@ -22,6 +22,7 @@
 #endif
 
 #define USE_PRECISE_CLASS_NAMES 0
+#define DESCRIPTOR_ON 0
 
 /** Page size in bytes */
 #define VPAGE_SIZE 131000
@@ -52,7 +53,8 @@ namespace Lib {
 
 class Allocator {
 public:
-  Allocator();
+  Allocator(const char* name);
+  const char* _name;
   ~Allocator();
   
   /** Return the amount of used memory */
@@ -78,7 +80,7 @@ public:
    * - through which allocations by the here defined macros are channelled */
   static Allocator* current;
 
-#if VDEBUG
+#if VDEBUG && DESCRIPTOR_ON
   void* allocateKnown(size_t size,const char* className) ALLOC_SIZE_ATTR;
   void deallocateKnown(void* obj,size_t size,const char* className);
   void* allocateUnknown(size_t size,const char* className) ALLOC_SIZE_ATTR;
@@ -113,7 +115,7 @@ public:
     }
   }; // class Allocator::Initialiser
 
-  static Allocator* newAllocator();
+  static Allocator* newAllocator(const char* name);
 
 private:
   char* allocatePiece(size_t size);
@@ -172,6 +174,7 @@ public:
     ~AllowBypassing() { _tolerantZone--; }
   };
   
+#if DESCRIPTOR_ON
   /** Descriptor stores information about allocated pieces of memory */
   struct Descriptor
   {
@@ -208,6 +211,7 @@ public:
     /** capacity of the map */
     static size_t capacity;
   };
+#endif
 #endif
 
 private:
@@ -336,6 +340,11 @@ void array_delete(T* array, size_t length)
 
 
 #if VDEBUG
+#define BYPASSING_ALLOCATOR_(SEED) Allocator::AllowBypassing _tmpBypass_##SEED;
+#define BYPASSING_ALLOCATOR BYPASSING_ALLOCATOR_(__LINE__)
+#endif
+
+#if VDEBUG && DESCRIPTOR_ON
 
 std::ostream& operator<<(std::ostream& out, const Allocator::Descriptor& d);
 
@@ -382,8 +391,6 @@ std::ostream& operator<<(std::ostream& out, const Allocator::Descriptor& d);
 #define DEALLOC_UNKNOWN(obj,className)		                \
   (Lib::Allocator::current->deallocateUnknown(obj,className))
          
-#define BYPASSING_ALLOCATOR_(SEED) Allocator::AllowBypassing _tmpBypass_##SEED;
-#define BYPASSING_ALLOCATOR BYPASSING_ALLOCATOR_(__LINE__)
      
 #else
 
@@ -412,7 +419,9 @@ std::ostream& operator<<(std::ostream& out, const Allocator::Descriptor& d);
 #define DEALLOC_UNKNOWN(obj,className)		         \
   (Lib::Allocator::current->deallocateUnknown(obj))
 
+#if DESCRIPTOR_ON
 #define BYPASSING_ALLOCATOR
+#endif
      
 #endif
 

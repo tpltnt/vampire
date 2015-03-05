@@ -71,6 +71,7 @@ void Assertion::checkType(const char* file,int line,const void* ptr, const char*
     return;
   }
 
+#if DESCRIPTOR_ON
   Allocator::Descriptor* desc = Allocator::Descriptor::find(ptr);
 
   if(!desc) {
@@ -106,6 +107,7 @@ void Assertion::checkType(const char* file,int line,const void* ptr, const char*
     cout << "----- end of stack dump -----\n";
   }
   throw Debug::AssertionViolationException(file,line);
+#endif
 } // Assertion::violated
 
 /**

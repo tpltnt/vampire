@@ -22,6 +22,8 @@
 
 #include "Shell/Options.hpp"
 
+#include "MainLoopContext.hpp"
+
 #include "BDD.hpp"
 #include "BDDClausifier.hpp"
 #include "Inference.hpp"
@@ -94,7 +96,14 @@ void* Clause::operator new(size_t sz, unsigned lits)
   size_t size = sizeof(Clause) + lits * sizeof(Literal*);
   size -= sizeof(Literal*);
 
-  return ALLOC_KNOWN(size,"Clause");
+  Lib::Allocator* allocator;
+  if(MainLoopContext::currentContext){
+    allocator = MainLoopContext::currentContext->getAllocator();
+  }else{
+    allocator = Lib::Allocator::current;
+  }
+
+  return allocator->allocateKnown(size);
 }
 
 void Clause::operator delete(void* ptr,unsigned length)
@@ -109,7 +118,13 @@ void Clause::operator delete(void* ptr,unsigned length)
   size_t size = sizeof(Clause) + length * sizeof(Literal*);
   size -= sizeof(Literal*);
 
-  DEALLOC_KNOWN(ptr, size,"Clause");
+  Lib::Allocator* allocator;
+  if(MainLoopContext::currentContext){
+    allocator = MainLoopContext::currentContext->getAllocator();
+  }else{
+    allocator = Lib::Allocator::current;
+  }
+  allocator->deallocateKnown(ptr, size);
 }
 
 void Clause::destroyExceptInferenceObject()
@@ -126,7 +141,14 @@ void Clause::destroyExceptInferenceObject()
   size_t size = sizeof(Clause) + _length * sizeof(Literal*);
   size -= sizeof(Literal*);
 
-  DEALLOC_KNOWN(this, size,"Clause");
+  Lib::Allocator* allocator;
+  if(MainLoopContext::currentContext){
+    allocator = MainLoopContext::currentContext->getAllocator();
+  }else{
+    allocator = Lib::Allocator::current;
+  }
+
+  allocator->deallocateKnown(this, size);
 }
 
 

@@ -672,24 +672,35 @@ bool SSplitter::tryGetExistingComponentName(unsigned size, Literal* const * lits
 Clause* SSplitter::buildAndInsertComponentClause(SplitLevel name, unsigned size, Literal* const * lits, Clause* orig, bool copy)
 {
   CALL("SSplitter::buildAndInsertComponentClause");
-#if VDEBUG
-  if(_db[name]){ MainLoopScheduler::log() << _db[name]->component->toString() << endl; }
-#endif//VDEBUG
+//#if VDEBUG
+ // if(_db[name]){ MainLoopScheduler::log() << _db[name]->component->toString() << endl; }
+//#endif//VDEBUG
   ASS_EQ(_db[name],0);
 
   Unit::InputType inpType = orig ? orig->inputType() : Unit::AXIOM;
-  Clause* compCl = Clause::fromIterator(getArrayishObjectIterator(lits, size), inpType, new Inference(Inference::SAT_SPLITTING_COMPONENT));
 
-#if VDEBUG
-  MainLoopScheduler::log() << "Constructing sr for " << name << endl;
-#endif//VDEBUG
+  // Trick to make compCl_global be allocated globally
+  // All component clauses are globally allocated, not proof-attempt allocated
+  MainLoopContext::currentContext->switchAllocatorToGlobal();
+  Clause* compCl = Clause::fromIterator(getArrayishObjectIterator(lits, size), inpType, new Inference(Inference::SAT_SPLITTING_COMPONENT));
+  MainLoopContext::currentContext->switchAllocatorBack();
+
+
+//#if VDEBUG
+  //MainLoopScheduler::log() << "Constructing sr for " << name << endl;
+//#endif//VDEBUG
+
+
+  // _db is local
   _db[name] = new SplitRecord(compCl);
 
   compCl->setSplits(SplitSet::getSingleton(name));
 
   {
     TimeCounter tc(TC_SPLITTING_COMPONENT_INDEX_MAINTENANCE);
-    if(!copy){_componentIdx -> insert(compCl);} // do not add to _componentIdx if a copy, as is already there
+    if(!copy){
+	_componentIdx -> insert(compCl);
+    } // do not add to _componentIdx if a copy, as is already there
 #if VDEBUG
     else{ ASS((_componentIdx -> retrieveVariants(lits, size)).hasNext()); }
 #endif//VDEBUG
@@ -985,9 +996,9 @@ bool SSplitter::handleEmptyClause(Clause* cl)
 {
   CALL("SSplitter::handleEmptyClause");
 
-#if VDEBUG
-  cout << "handle empty clause in ssplitter" << endl;
-#endif
+//#if VDEBUG
+//  cout << "handle empty clause in ssplitter" << endl;
+//#endif
 
   if(cl->splits()->isEmpty()) {
     return false;
@@ -1000,7 +1011,7 @@ bool SSplitter::handleEmptyClause(Clause* cl)
   SATClause* confl = SATClause::fromStack(conflictLits);
   confl->setInference(new FOConversionInference(cl));
   
-  RSTAT_MCTR_INC("sspl_confl_len", confl->length());
+  //RSTAT_MCTR_INC("sspl_confl_len", confl->length());
 
   addSATClause(confl, true);
 
@@ -1019,9 +1030,9 @@ void SSplitter::addComponents(const SplitLevelStack& toAdd)
     SplitRecord* sr = _db[sl];
     ASS(sr);
     ASS(!sr->active);
-#if VDEBUG
-    MainLoopScheduler::log() << "adding " << sl << endl;
-#endif
+//#if VDEBUG
+//    MainLoopScheduler::log() << "adding " << sl << endl;
+//#endif
     sr->active = true;
 
     ASS(sr->children.isEmpty());
@@ -1059,9 +1070,9 @@ void SSplitter::removeComponents(const SplitLevelStack& toRemove)
     SplitLevel bl=blit.next();
     SplitRecord* sr=_db[bl];
     ASS(sr);
-#if VDEBUG
-    MainLoopScheduler::log() << "backtrack " << bl << endl;
-#endif
+//#if VDEBUG
+//    MainLoopScheduler::log() << "backtrack " << bl << endl;
+//#endif
     ASS(sr->active);
 
     while(sr->children.isNonEmpty()) {

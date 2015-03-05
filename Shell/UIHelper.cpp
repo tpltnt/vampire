@@ -331,7 +331,7 @@ void UIHelper::outputResult(ostream& out)
 	out << "Time limits for all proof attempts reached!\n";
 	break;
   case Statistics::MEMORY_LIMIT:
-#if VDEBUG
+#if VDEBUG && DESCRIPTOR_ON
     Allocator::reportUsageByClasses();
 #endif
     addCommentIfCASC(out);

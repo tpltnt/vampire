@@ -23,6 +23,17 @@ public:
 	MainLoopContext(Problem& prb, Shell::Options& opts);
 	const unsigned _id;
 
+private:
+	Lib::Allocator* _allocator;
+	bool _use_global;
+public:
+	Lib::Allocator* getAllocator(){ 
+		if(_use_global) return Lib::Allocator::current;
+		return _allocator; 
+	}
+	void switchAllocatorToGlobal(){ _use_global=true;}
+	void switchAllocatorBack(){ _use_global=false;}
+
        CLASS_NAME(MainLoopContext);
        USE_ALLOCATOR(MainLoopContext);
 

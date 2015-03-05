@@ -11,12 +11,14 @@
 #include "Kernel/Problem.hpp"
 #include "Lib/Environment.hpp"
 #include "Lib/Timer.hpp"
+#include "Lib/Allocator.hpp"
 #include "Shell/Statistics.hpp"
 
 namespace Kernel {
 
 using Lib::Environment;
 using Lib::Timer;
+using Lib::Allocator;
 using Shell::Options;
 using Shell::Statistics;
 
@@ -25,7 +27,7 @@ unsigned int MainLoopContext::id_counter = 0;
 MainLoopContext* MainLoopContext::currentContext = 0;
 
 	MainLoopContext::MainLoopContext(Problem& prb, Options& opts):
-			_id(id_counter++),
+			_id(id_counter++), _use_global(false),
             _opts(opts), _startTime(0), _elapsed(0), _timeBudget(0), _initialised(false), _steps(0) {
 
 		CALL("MainLoopContext::MainLoopContext");
@@ -34,6 +36,10 @@ MainLoopContext* MainLoopContext::currentContext = 0;
 		cout << "Creating context " << _id << " with " << opts.localTimeLimitInDeciseconds() <<
 				" and " << opts.timeLimitInDeciseconds() << " local and global time" << endl;
 #endif//VDEBUG
+
+		vstring aname = "proof attempt " + Lib::Int::toString(_id);
+		cout << "allocator name is " << aname.c_str() << endl;
+		_allocator = Lib::Allocator::newAllocator(aname.c_str());
 
 		// We must copy the problem otherwise we share clauses
 		// This is an issue as clauses store information about
@@ -56,6 +62,10 @@ MainLoopContext* MainLoopContext::currentContext = 0;
                 ASS(_env); ASS(_prb);
 		delete _env;
 		delete _prb;
+		{
+			BYPASSING_ALLOCATOR;
+			delete _allocator;
+		}
 	}
 
 
@@ -133,7 +143,9 @@ MainLoopContext* MainLoopContext::currentContext = 0;
 			_ml -> doOneAlgorithmStep();
 
 #if VDEBUG
-		cout << "Finished step " << _steps << " in context " <<  _id << endl;
+		if(_steps<1000 || _steps%1000==0){
+			cout << "Finished step " << _steps << " in context " <<  _id << endl;
+		}
 #endif //VDEBUG
 
 			_steps++;

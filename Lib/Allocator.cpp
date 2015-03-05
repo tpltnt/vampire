@@ -17,6 +17,7 @@
 #include "Lib/System.hpp"
 
 #define SAFE_OUT_OF_MEM_SOLUTION 1
+#define DESCRIPTOR_ON 0
 
 #ifndef USE_SYSTEM_ALLOCATION
 /** If the following is set to true the Vampire will use the
@@ -84,13 +85,15 @@ Allocator::Page* Allocator::_pages[MAX_PAGES];
 size_t Allocator::_usedMemory = 0;
 Allocator* Allocator::_all[MAX_ALLOCATORS];
 
-#if VDEBUG
+#if VDEBUG 
+#if DESCRIPTOR_ON
 unsigned Allocator::Descriptor::globalTimestamp;
 size_t Allocator::Descriptor::noOfEntries;
 size_t Allocator::Descriptor::maxEntries;
 size_t Allocator::Descriptor::capacity;
 Allocator::Descriptor* Allocator::Descriptor::map;
 Allocator::Descriptor* Allocator::Descriptor::afterLast;
+#endif
 unsigned Allocator::_tolerantZone;
 #endif
 
@@ -119,7 +122,7 @@ string Lib::___prettyFunToClassName(std::string str)
  * Create a new allocator.
  * @since 10/01/2008 Manchester
  */
-Allocator::Allocator()
+Allocator::Allocator(const char* n) : _name(n)
 {
   CALL("Allocator::Allocator");
 
@@ -142,6 +145,7 @@ Lib::Allocator::~Allocator ()
 {
   CALL("Allocator::~Allocator");
 
+  cout << "Clearing pages of allocator " << _name << endl;
   while (_myPages) {
     deallocatePages(_myPages);
   }
@@ -155,7 +159,7 @@ void Allocator::initialise()
 {
   CALL("Allocator::initialise")
 
-#if VDEBUG
+#if VDEBUG && DESCRIPTOR_ON
   Descriptor::map = 0;
   Descriptor::afterLast = 0;
 #endif
@@ -164,7 +168,7 @@ void Allocator::initialise()
   _tolerated = 330000000u;
 
 #if ! USE_SYSTEM_ALLOCATION
-  current = newAllocator();
+  current = newAllocator("global");
 
   for (int i = MAX_PAGES-1;i >= 0;i--) {
     _pages[i] = 0;
@@ -172,7 +176,7 @@ void Allocator::initialise()
 #endif
 } // Allocator::initialise
 
-#if VDEBUG
+#if VDEBUG && DESCRIPTOR_ON
 /**
  * Write information about a memory address to cout.
  * @since 30/03/2008 flight Murcia-Manchester
@@ -283,7 +287,7 @@ void Allocator::cleanup()
 
   // release all the pages
   for (int i = MAX_PAGES-1;i >= 0;i--) {
-#if VDEBUG && TRACE_ALLOCATIONS
+#if VDEBUG && TRACE_ALLOCATIONS  && DESCRIPTOR_ON
     int cnt = 0;
 #endif    
     while (_pages[i]) {
@@ -292,18 +296,18 @@ void Allocator::cleanup()
       
       char* mem = reinterpret_cast<char*>(pg);
       ::delete[] mem;
-#if VDEBUG && TRACE_ALLOCATIONS
+#if VDEBUG && TRACE_ALLOCATIONS && DESCRIPTOR_ON
       cnt++;
 #endif    
     }
-#if VDEBUG && TRACE_ALLOCATIONS    
+#if VDEBUG && TRACE_ALLOCATIONS    && DESCRIPTOR_ON 
       if (cnt) {
         cout << "deleted " << cnt << " global page(s) of size " << VPAGE_SIZE*(i+1) << endl;
       }
 #endif        
   }
     
-#if VDEBUG
+#if VDEBUG && DESCRIPTOR_ON
   delete[] Descriptor::map;
 #endif  
 } // Allocator::initialise
@@ -316,7 +320,7 @@ void Allocator::cleanup()
  * object.
  * @since 10/01/2008 Manchester
  */
-#if VDEBUG
+#if VDEBUG && DESCRIPTOR_ON
 void Allocator::deallocateKnown(void* obj,size_t size,const char* className)
 #else
 void Allocator::deallocateKnown(void* obj,size_t size)
@@ -325,7 +329,7 @@ void Allocator::deallocateKnown(void* obj,size_t size)
   CALL("Allocator::deallocateKnown");
   ASS(obj);
 
-#if VDEBUG
+#if VDEBUG && DESCRIPTOR_ON
   Descriptor* desc = Descriptor::find(obj);
   desc->timestamp = ++Descriptor::globalTimestamp;
 #if TRACE_ALLOCATIONS
@@ -340,7 +344,7 @@ void Allocator::deallocateKnown(void* obj,size_t size)
 #endif
 
 #if USE_SYSTEM_ALLOCATION
-#if VDEBUG
+#if VDEBUG && DESCRIPTOR_ON
   desc->allocated = 0;
 #endif
   free(obj);
@@ -358,7 +362,7 @@ void Allocator::deallocateKnown(void* obj,size_t size)
     _freeList[index] = mem;
   }
 
-#if VDEBUG
+#if VDEBUG && DESCRIPTOR_ON
   desc->allocated = 0;
 #endif
 
@@ -391,7 +395,7 @@ void Allocator::deallocateKnown(void* obj,size_t size)
  * storing the size of the object.
  * @since 13/01/2008 Manchester
  */
-#if VDEBUG
+#if VDEBUG && DESCRIPTOR_ON
 void Allocator::deallocateUnknown(void* obj,const char* className)
 #else
 void Allocator::deallocateUnknown(void* obj)
@@ -399,7 +403,7 @@ void Allocator::deallocateUnknown(void* obj)
 {
   CALL("Allocator::deallocateUnknown");
 
-#if VDEBUG
+#if VDEBUG && DESCRIPTOR_ON
   Descriptor* desc = Descriptor::find(obj);
   desc->timestamp = ++Descriptor::globalTimestamp;
 #if TRACE_ALLOCATIONS
@@ -423,8 +427,9 @@ void Allocator::deallocateUnknown(void* obj)
   char* mem = reinterpret_cast<char*>(obj) - sizeof(Known);
   Unknown* unknown = reinterpret_cast<Unknown*>(mem);
   size_t size = unknown->size;
+#if DESCRIPTOR_ON
   ASS_EQ(desc->size, size);
-
+#endif
   if (size >= REQUIRES_PAGE) {
     mem = mem-PAGE_PREFIX_SIZE;
     deallocatePages(reinterpret_cast<Page*>(mem));
@@ -462,7 +467,7 @@ void Allocator::deallocateUnknown(void* obj)
  * Create a new allocator.
  * @since 10/01/2008 Manchester
  */
-Allocator* Allocator::newAllocator()
+Allocator* Allocator::newAllocator(const char* name)
 {
   CALL("Allocator::newAllocator");
   BYPASSING_ALLOCATOR;
@@ -470,7 +475,7 @@ Allocator* Allocator::newAllocator()
 #if VDEBUG && USE_SYSTEM_ALLOCATION
   ASSERTION_VIOLATION;
 #else
-  Allocator* result = new Allocator();
+  Allocator* result = new Allocator(name);
 
   if (_total >= MAX_ALLOCATORS) {
     throw Exception("The maximal number of allocators exceeded.");
@@ -532,7 +537,7 @@ Allocator::Page* Allocator::allocatePages(size_t size)
       env -> beginOutput();
       reportSpiderStatus('?');
       env -> out() << "Memory limit exceeded!\n";
-# if VDEBUG
+# if VDEBUG &&  DESCRIPTOR_ON
 	Allocator::reportUsageByClasses();
 # endif
       if(env -> statistics) {
@@ -559,7 +564,7 @@ Allocator::Page* Allocator::allocatePages(size_t size)
   }
   result->size = realSize;
 
-#if VDEBUG
+#if VDEBUG && DESCRIPTOR_ON
   Descriptor* desc = Descriptor::find(result);
   ASS(! desc->allocated);
 
@@ -621,7 +626,7 @@ void Allocator::deallocatePages(Page* page)
 #else
   CALL("Allocator::deallocatePages");
 
-#if VDEBUG
+#if VDEBUG && DESCRIPTOR_ON
   Descriptor* desc = Descriptor::find(page);
   desc->timestamp = ++Descriptor::globalTimestamp;
 #if TRACE_ALLOCATIONS
@@ -682,7 +687,7 @@ void Allocator::deallocatePages(Page* page)
  * Allocate object of size @b size. 
  * @since 12/01/2008 Manchester
  */
-#if VDEBUG
+#if VDEBUG  && DESCRIPTOR_ON && DESCRIPTOR_ON
 void* Allocator::allocateKnown(size_t size,const char* className)
 #else
 void* Allocator::allocateKnown(size_t size)
@@ -693,7 +698,8 @@ void* Allocator::allocateKnown(size_t size)
 
   char* result = allocatePiece(size);
 
-#if VDEBUG
+
+#if VDEBUG && DESCRIPTOR_ON
   Descriptor* desc = Descriptor::find(result);
   ASS_REP(! desc->allocated, size);
 
@@ -708,6 +714,7 @@ void* Allocator::allocateKnown(size_t size)
   cout << *desc << ": AK\n" << flush;
 #endif
 #endif
+
 
 #if WATCH_ADDRESS
   unsigned addr = (unsigned)(void*)result;
@@ -773,7 +780,7 @@ char* Allocator::allocatePiece(size_t size)
       if (_reserveBytesAvailable) {
 	index = (_reserveBytesAvailable-1)/sizeof(Known);
 	Known* save = reinterpret_cast<Known*>(_nextAvailableReserve);
-#if VDEBUG
+#if VDEBUG && DESCRIPTOR_ON
 	Descriptor* desc = Descriptor::find(save);
 	ASS(! desc->allocated);
 	desc->size = _reserveBytesAvailable;
@@ -803,7 +810,7 @@ char* Allocator::allocatePiece(size_t size)
  * of the object plus the size of a word.
  * @since 13/01/2008 Manchester
  */
-#if VDEBUG
+#if VDEBUG  && DESCRIPTOR_ON
 void* Allocator::allocateUnknown(size_t size,const char* className)
 #else
 void* Allocator::allocateUnknown(size_t size)
@@ -818,7 +825,7 @@ void* Allocator::allocateUnknown(size_t size)
   unknown->size = size;
   result += sizeof(Known);
 
-#if VDEBUG
+#if VDEBUG && DESCRIPTOR_ON
   Descriptor* desc = Descriptor::find(result);
   ASS(! desc->allocated);
 
@@ -859,7 +866,7 @@ void* Allocator::allocateUnknown(size_t size)
 } // Allocator::allocateUnknown
 
 
-#if VDEBUG
+#if VDEBUG && DESCRIPTOR_ON
 /**
  * Find a descriptor in the map, and if it is not there, add it.
  * @since 14/12/2005 Bellevue
