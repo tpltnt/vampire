@@ -122,7 +122,7 @@ string Lib::___prettyFunToClassName(std::string str)
  * Create a new allocator.
  * @since 10/01/2008 Manchester
  */
-Allocator::Allocator(const char* n) : _name(n)
+Allocator::Allocator()
 {
   CALL("Allocator::Allocator");
 
@@ -145,7 +145,7 @@ Lib::Allocator::~Allocator ()
 {
   CALL("Allocator::~Allocator");
 
-  cout << "Clearing pages of allocator " << _name << endl;
+  cout << "Clearing pages of allocator " << endl;
   while (_myPages) {
     deallocatePages(_myPages);
   }
@@ -168,7 +168,7 @@ void Allocator::initialise()
   _tolerated = 330000000u;
 
 #if ! USE_SYSTEM_ALLOCATION
-  current = newAllocator("global");
+  current = newAllocator();
 
   for (int i = MAX_PAGES-1;i >= 0;i--) {
     _pages[i] = 0;
@@ -467,7 +467,7 @@ void Allocator::deallocateUnknown(void* obj)
  * Create a new allocator.
  * @since 10/01/2008 Manchester
  */
-Allocator* Allocator::newAllocator(const char* name)
+Allocator* Allocator::newAllocator()
 {
   CALL("Allocator::newAllocator");
   BYPASSING_ALLOCATOR;
@@ -475,7 +475,7 @@ Allocator* Allocator::newAllocator(const char* name)
 #if VDEBUG && USE_SYSTEM_ALLOCATION
   ASSERTION_VIOLATION;
 #else
-  Allocator* result = new Allocator(name);
+  Allocator* result = new Allocator();
 
   if (_total >= MAX_ALLOCATORS) {
     throw Exception("The maximal number of allocators exceeded.");
@@ -643,6 +643,7 @@ void Allocator::deallocatePages(Page* page)
 
   size_t size = page->size;
   int index = (size-1)/VPAGE_SIZE;
+  cout << "Deallocating page of size " << size << endl;
 
   Page* next = page->next;
   if (next) {

@@ -34,6 +34,13 @@ public:
 	void switchAllocatorToGlobal(){ _use_global=true;}
 	void switchAllocatorBack(){ _use_global=false;}
 
+	static Lib::Allocator* getCurrentAllocator(){
+		if(currentContext){
+			return currentContext->getAllocator();
+		}
+		return Lib::Allocator::current;
+	}
+
        CLASS_NAME(MainLoopContext);
        USE_ALLOCATOR(MainLoopContext);
 

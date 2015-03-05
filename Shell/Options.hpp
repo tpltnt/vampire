@@ -128,6 +128,7 @@ public:
     LATEX_OUTPUT,
     LINGVA_ADDITIONAL_INVARIANTS,
     LITERAL_COMPARISON_MODE,
+    LOCAL_ALLOCATION,
     LOG_FILE,
     LRS_FIRST_TIME_CHECK,
     LRS_WEIGHT_LIMIT_ONLY,
@@ -617,6 +618,7 @@ public:
   int getMultiProofAttemptPriority() const { return _multiProofAttemptPriority; } 
   void setMultiProofAttemptConcurrent(unsigned c) { _multiProofAttemptConcurrent=c;}
   unsigned getMultiProofAttemptConcurrent() const { return _multiProofAttemptConcurrent; } 
+  bool localAllocation() const { return _localAllocation; }
 
   InputSyntax inputSyntax() const { return _inputSyntax; }
   void setInputSyntax(InputSyntax newVal) { _inputSyntax = newVal; }
@@ -948,6 +950,7 @@ private:
 
   LiteralComparisonMode _literalComparisonMode;
   vstring _logFile;
+  bool _localAllocation;
   int _lrsFirstTimeCheck;
   int _lrsWeightLimitOnly;
 

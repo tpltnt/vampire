@@ -53,8 +53,7 @@ namespace Lib {
 
 class Allocator {
 public:
-  Allocator(const char* name);
-  const char* _name;
+  Allocator();
   ~Allocator();
   
   /** Return the amount of used memory */
@@ -115,7 +114,7 @@ public:
     }
   }; // class Allocator::Initialiser
 
-  static Allocator* newAllocator(const char* name);
+  static Allocator* newAllocator();
 
 private:
   char* allocatePiece(size_t size);

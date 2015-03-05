@@ -203,6 +203,7 @@ const char* Options::Constants::_optionNames[] = {
   "lingva_additional_invariants",
 
   "literal_comparison_mode",
+  "local_allocation",
   "log_file",
   "lrs_first_time_check",
   "lrs_weight_limit_only",
@@ -909,6 +910,7 @@ Options::Options ()
   _lingvaAdditionalInvariants(""),
   _literalComparisonMode(LCM_STANDARD),
   _logFile("off"),
+  _localAllocation(false),
   _lrsFirstTimeCheck(5),
   _lrsWeightLimitOnly(false),
 
@@ -1377,6 +1379,11 @@ void Options::set(const char* name,const char* value, int index)
     case LOG_FILE:
       _logFile = value;
       return;
+
+    case LOCAL_ALLOCATION:
+      _localAllocation = onOffToBool(value,name);
+      return;
+
     case LRS_FIRST_TIME_CHECK:
       if (Int::stringToInt(value,intValue) &&
 	  setLrsFirstTimeCheck(intValue)) {

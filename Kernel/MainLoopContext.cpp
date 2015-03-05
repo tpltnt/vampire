@@ -37,9 +37,12 @@ MainLoopContext* MainLoopContext::currentContext = 0;
 				" and " << opts.timeLimitInDeciseconds() << " local and global time" << endl;
 #endif//VDEBUG
 
-		vstring aname = "proof attempt " + Lib::Int::toString(_id);
-		cout << "allocator name is " << aname.c_str() << endl;
-		_allocator = Lib::Allocator::newAllocator(aname.c_str());
+		if(opts.localAllocation()){
+			_allocator = Lib::Allocator::newAllocator();
+		}
+		else{
+			_allocator = Lib::Allocator::current;
+		}
 
 		// We must copy the problem otherwise we share clauses
 		// This is an issue as clauses store information about
@@ -59,13 +62,14 @@ MainLoopContext* MainLoopContext::currentContext = 0;
 		cout << "Deleting context " <<  _id << endl;
 #endif //VDEBUG
 
+                if(_opts.localAllocation()){
+                        BYPASSING_ALLOCATOR;
+                        delete _allocator;
+                }
+
                 ASS(_env); ASS(_prb);
 		delete _env;
 		delete _prb;
-		{
-			BYPASSING_ALLOCATOR;
-			delete _allocator;
-		}
 	}
 
 

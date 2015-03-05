@@ -96,14 +96,7 @@ void* Clause::operator new(size_t sz, unsigned lits)
   size_t size = sizeof(Clause) + lits * sizeof(Literal*);
   size -= sizeof(Literal*);
 
-  Lib::Allocator* allocator;
-  if(MainLoopContext::currentContext){
-    allocator = MainLoopContext::currentContext->getAllocator();
-  }else{
-    allocator = Lib::Allocator::current;
-  }
-
-  return allocator->allocateKnown(size);
+  return MainLoopContext::getCurrentAllocator()->allocateKnown(size);
 }
 
 void Clause::operator delete(void* ptr,unsigned length)
@@ -118,13 +111,7 @@ void Clause::operator delete(void* ptr,unsigned length)
   size_t size = sizeof(Clause) + length * sizeof(Literal*);
   size -= sizeof(Literal*);
 
-  Lib::Allocator* allocator;
-  if(MainLoopContext::currentContext){
-    allocator = MainLoopContext::currentContext->getAllocator();
-  }else{
-    allocator = Lib::Allocator::current;
-  }
-  allocator->deallocateKnown(ptr, size);
+  MainLoopContext::getCurrentAllocator()->deallocateKnown(ptr, size);
 }
 
 void Clause::destroyExceptInferenceObject()
@@ -141,14 +128,7 @@ void Clause::destroyExceptInferenceObject()
   size_t size = sizeof(Clause) + _length * sizeof(Literal*);
   size -= sizeof(Literal*);
 
-  Lib::Allocator* allocator;
-  if(MainLoopContext::currentContext){
-    allocator = MainLoopContext::currentContext->getAllocator();
-  }else{
-    allocator = Lib::Allocator::current;
-  }
-
-  allocator->deallocateKnown(this, size);
+  MainLoopContext::getCurrentAllocator()->deallocateKnown(this, size);
 }
 
 
