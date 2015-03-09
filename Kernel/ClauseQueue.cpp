@@ -9,6 +9,7 @@
 #include "Lib/Allocator.hpp"
 #include "Lib/Random.hpp"
 #include "Lib/Environment.hpp"
+#include "MainLoopContext.hpp"
 
 #if VDEBUG
 #include "Clause.hpp"
@@ -47,8 +48,7 @@ void ClauseQueue::insert(Clause* c)
     h = _height;
     _left.nodes[h] = 0;
   }
-  void* mem = ALLOC_KNOWN(sizeof(Node)+h*sizeof(Node*),
-			  "ClauseQueue::Node");
+  void* mem = MainLoopContext::getCurrentAllocator()->allocateKnown(sizeof(Node)+h*sizeof(Node*));
   Node* newNode = reinterpret_cast<Node*>(mem);
   newNode->clause = c;
 
@@ -102,9 +102,8 @@ bool ClauseQueue::remove(Clause* c)
 	}
       }
       // deallocate the node
-      DEALLOC_KNOWN(next,
-		    sizeof(Node)+height*sizeof(Node*),
-		    "ClauseQueue::Node");
+      MainLoopContext::getCurrentAllocator()->deallocateKnown(next,
+		    sizeof(Node)+height*sizeof(Node*));
       while (_height > 0 && ! _left.nodes[_height]) {
 	_height--;
       }
@@ -145,9 +144,8 @@ Clause* ClauseQueue::pop()
   Clause* c = node->clause;
 
   // deallocate the node
-  DEALLOC_KNOWN(node,
-		sizeof(Node)+h*sizeof(Node*),
-		"ClauseQueue::Node");
+  MainLoopContext::getCurrentAllocator()->deallocateKnown(node,
+		sizeof(Node)+h*sizeof(Node*));
   while (_height > 0 && ! _left.nodes[_height]) {
     _height--;
   }

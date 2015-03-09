@@ -54,8 +54,6 @@ class AWPassiveClauseContainer
 : public PassiveClauseContainer
 {
 public:
-  CLASS_NAME(AWPassiveClauseContainer);
-  USE_ALLOCATOR(AWPassiveClauseContainer);
 
   AWPassiveClauseContainer(const Options& opt);
   virtual ~AWPassiveClauseContainer();
