@@ -48,7 +48,7 @@ void ClauseQueue::insert(Clause* c)
     h = _height;
     _left.nodes[h] = 0;
   }
-  void* mem = MainLoopContext::getCurrentAllocator()->allocateKnown(sizeof(Node)+h*sizeof(Node*));
+  void* mem = ALLOC_KNOWN_LOCAL(sizeof(Node)+h*sizeof(Node*),"ClauseQueue::Node");
   Node* newNode = reinterpret_cast<Node*>(mem);
   newNode->clause = c;
 
@@ -102,8 +102,9 @@ bool ClauseQueue::remove(Clause* c)
 	}
       }
       // deallocate the node
-      MainLoopContext::getCurrentAllocator()->deallocateKnown(next,
-		    sizeof(Node)+height*sizeof(Node*));
+      DEALLOC_KNOWN_LOCAL(next,
+		    sizeof(Node)+height*sizeof(Node*),
+                    "ClauseQueue::Node");
       while (_height > 0 && ! _left.nodes[_height]) {
 	_height--;
       }
@@ -144,8 +145,9 @@ Clause* ClauseQueue::pop()
   Clause* c = node->clause;
 
   // deallocate the node
-  MainLoopContext::getCurrentAllocator()->deallocateKnown(node,
-		sizeof(Node)+h*sizeof(Node*));
+  DEALLOC_KNOWN_LOCAL(node,
+		sizeof(Node)+h*sizeof(Node*),
+                "ClauseQueue::Node");
   while (_height > 0 && ! _left.nodes[_height]) {
     _height--;
   }

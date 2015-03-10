@@ -72,7 +72,7 @@ void Assertion::checkType(const char* file,int line,const void* ptr, const char*
   }
 
 #if DESCRIPTOR_ON
-  Allocator::Descriptor* desc = Allocator::Descriptor::find(ptr);
+  Allocator::Descriptor* desc = Allocator::current->_descriptor.find(ptr);
 
   if(!desc) {
     reportSpiderFail();

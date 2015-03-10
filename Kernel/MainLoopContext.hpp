@@ -122,6 +122,22 @@ private:
 
 };
 
+#if VDEBUG && DESCRIPTOR_ON
+
+#define ALLOC_KNOWN_LOCAL(size,className)                             \
+  (MainLoopContext::getCurrentAllocator()->allocateKnown(size,className))
+#define DEALLOC_KNOWN_LOCAL(obj,size,className)                       \
+  (MainLoopContext::getCurrentAllocator()->deallocateKnown(obj,size,className))
+
+#else
+
+#define ALLOC_KNOWN_LOCAL(size,className)                             \
+  (MainLoopContext::getCurrentAllocator()->allocateKnown(size))
+#define DEALLOC_KNOWN_LOCAL(obj,size,className)                       \
+  (MainLoopContext::getCurrentAllocator()->deallocateKnown(obj,size))
+
+#endif
+
 } /* namespace Kernel */
 
 #endif /* __MainLoopContext__ */

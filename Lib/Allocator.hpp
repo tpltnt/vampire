@@ -22,7 +22,7 @@
 #endif
 
 #define USE_PRECISE_CLASS_NAMES 0
-#define DESCRIPTOR_ON 0
+#define DESCRIPTOR_ON 1
 
 /** Page size in bytes */
 #define VPAGE_SIZE 131000
@@ -194,22 +194,29 @@ public:
     Descriptor();
 
     friend std::ostream& operator<<(std::ostream& out, const Descriptor& d);
-
-    static unsigned hash (const void* addr);
-    static Descriptor* find(const void* addr);
-    /** map from addresses to memory descriptors */
-    static Descriptor* map;
-    /** timestamp for (de)allocations */
-    static unsigned globalTimestamp;
-    /** number of entries in the map of memory descriptors */
-    static size_t noOfEntries;
-    /** number of entries in the map of memory descriptors */
-    static size_t maxEntries;
-    /** pointer to after the last descriptor in the table */
-    static Descriptor* afterLast;
-    /** capacity of the map */
-    static size_t capacity;
   };
+
+  /** DescriptorStore maps addresses to memory descriptors **/
+  struct DescriptorStore
+  {
+    DescriptorStore() : map(0), afterLast(0) {}
+
+    unsigned hash (const void* addr);
+    Descriptor* find(const void* addr);
+    /** map from addresses to memory descriptors */
+    Descriptor* map;
+    /** timestamp for (de)allocations */
+    unsigned globalTimestamp;
+    /** number of entries in the map of memory descriptors */
+    size_t noOfEntries;
+    /** number of entries in the map of memory descriptors */
+    size_t maxEntries;
+    /** pointer to after the last descriptor in the table */
+     Descriptor* afterLast;
+    /** capacity of the map */
+    size_t capacity;
+  };
+  DescriptorStore _descriptor;
 #endif
 #endif
 

@@ -17,7 +17,7 @@
 #include "Lib/System.hpp"
 
 #define SAFE_OUT_OF_MEM_SOLUTION 1
-#define DESCRIPTOR_ON 0
+#define DESCRIPTOR_ON 1
 
 #ifndef USE_SYSTEM_ALLOCATION
 /** If the following is set to true the Vampire will use the
@@ -86,14 +86,6 @@ size_t Allocator::_usedMemory = 0;
 Allocator* Allocator::_all[MAX_ALLOCATORS];
 
 #if VDEBUG 
-#if DESCRIPTOR_ON
-unsigned Allocator::Descriptor::globalTimestamp;
-size_t Allocator::Descriptor::noOfEntries;
-size_t Allocator::Descriptor::maxEntries;
-size_t Allocator::Descriptor::capacity;
-Allocator::Descriptor* Allocator::Descriptor::map;
-Allocator::Descriptor* Allocator::Descriptor::afterLast;
-#endif
 unsigned Allocator::_tolerantZone;
 #endif
 
@@ -125,6 +117,10 @@ string Lib::___prettyFunToClassName(std::string str)
 Allocator::Allocator()
 {
   CALL("Allocator::Allocator");
+
+#if VDEBUG && DESCRIPTOR_ON
+  _descriptor = DescriptorStore();
+#endif
 
 #if ! USE_SYSTEM_ALLOCATION
   for (int i = REQUIRES_PAGE/4-1;i >= 0;i--) {
@@ -159,11 +155,6 @@ void Allocator::initialise()
 {
   CALL("Allocator::initialise")
 
-#if VDEBUG && DESCRIPTOR_ON
-  Descriptor::map = 0;
-  Descriptor::afterLast = 0;
-#endif
-
   _memoryLimit = 300000000u;
   _tolerated = 330000000u;
 
@@ -189,8 +180,8 @@ void Allocator::addressStatus(const void* address)
   cout << "Status of address " << address << '\n';
 
   const char* a = static_cast<const char*>(address);
-  for (int i = Descriptor::capacity-1;i >= 0;i--) {
-    Descriptor& d = Descriptor::map[i];
+  for (int i = current->_descriptor.capacity-1;i >= 0;i--) {
+    Descriptor& d = current->_descriptor.map[i];
     const char* addr = static_cast<const char*>(d.address);
     if (addr < a) {
       continue;
@@ -222,8 +213,8 @@ void Allocator::reportUsageByClasses()
 {
   Lib::DHMap<const char*, size_t> summary;
   Lib::DHMap<const char*, size_t> cntSummary;
-  for (int i = Descriptor::capacity-1;i >= 0;i--) {
-    Descriptor& d = Descriptor::map[i];
+  for (int i = current->_descriptor.capacity-1;i >= 0;i--) {
+    Descriptor& d = current->_descriptor.map[i];
     if (!d.address || !d.size || !d.allocated) {
       continue;
     }
@@ -269,8 +260,8 @@ void Allocator::cleanup()
 #if CHECK_LEAKS
   if (MemoryLeak::report()) {
     int leaks = 0;
-    for (int i = Descriptor::capacity-1;i >= 0;i--) {
-      Descriptor& d = Descriptor::map[i];
+    for (int i = _descriptor.capacity-1;i >= 0;i--) {
+      Descriptor& d = _descriptor.map[i];
       if (d.allocated) {
 	if (! leaks) {
 	  cout << "Memory leaks found!\n";
@@ -308,7 +299,8 @@ void Allocator::cleanup()
   }
     
 #if VDEBUG && DESCRIPTOR_ON
-  delete[] Descriptor::map;
+// TODO support cleanup of multiple allocators and their descriptor objects!
+//  delete[] _descriptor.map;
 #endif  
 } // Allocator::initialise
 
@@ -330,8 +322,8 @@ void Allocator::deallocateKnown(void* obj,size_t size)
   ASS(obj);
 
 #if VDEBUG && DESCRIPTOR_ON
-  Descriptor* desc = Descriptor::find(obj);
-  desc->timestamp = ++Descriptor::globalTimestamp;
+  Descriptor* desc = _descriptor.find(obj);
+  desc->timestamp = ++_descriptor.globalTimestamp;
 #if TRACE_ALLOCATIONS
   cout << *desc << ": DK\n" << flush;
 #endif
@@ -404,8 +396,8 @@ void Allocator::deallocateUnknown(void* obj)
   CALL("Allocator::deallocateUnknown");
 
 #if VDEBUG && DESCRIPTOR_ON
-  Descriptor* desc = Descriptor::find(obj);
-  desc->timestamp = ++Descriptor::globalTimestamp;
+  Descriptor* desc = _descriptor.find(obj);
+  desc->timestamp = ++_descriptor.globalTimestamp;
 #if TRACE_ALLOCATIONS
   cout << *desc << ": DU\n" << flush;
 #endif
@@ -565,12 +557,12 @@ Allocator::Page* Allocator::allocatePages(size_t size)
   result->size = realSize;
 
 #if VDEBUG && DESCRIPTOR_ON
-  Descriptor* desc = Descriptor::find(result);
+  Descriptor* desc = _descriptor.find(result);
   ASS(! desc->allocated);
 
   desc->address = result;
   desc->cls = "Allocator::Page";
-  desc->timestamp = ++Descriptor::globalTimestamp;
+  desc->timestamp = ++_descriptor.globalTimestamp;
   desc->size = realSize;
   desc->allocated = 1;
   desc->known = 0;
@@ -627,8 +619,8 @@ void Allocator::deallocatePages(Page* page)
   CALL("Allocator::deallocatePages");
 
 #if VDEBUG && DESCRIPTOR_ON
-  Descriptor* desc = Descriptor::find(page);
-  desc->timestamp = ++Descriptor::globalTimestamp;
+  Descriptor* desc = _descriptor.find(page);
+  desc->timestamp = ++_descriptor.globalTimestamp;
 #if TRACE_ALLOCATIONS
   cout << *desc << ": DP\n" << flush;
 #endif
@@ -701,12 +693,12 @@ void* Allocator::allocateKnown(size_t size)
 
 
 #if VDEBUG && DESCRIPTOR_ON
-  Descriptor* desc = Descriptor::find(result);
+  Descriptor* desc = _descriptor.find(result);
   ASS_REP(! desc->allocated, size);
 
   desc->address = result;
   desc->cls = className;
-  desc->timestamp = ++Descriptor::globalTimestamp;
+  desc->timestamp = ++_descriptor.globalTimestamp;
   desc->size = size;
   desc->allocated = 1;
   desc->known = 1;
@@ -782,10 +774,10 @@ char* Allocator::allocatePiece(size_t size)
 	index = (_reserveBytesAvailable-1)/sizeof(Known);
 	Known* save = reinterpret_cast<Known*>(_nextAvailableReserve);
 #if VDEBUG && DESCRIPTOR_ON
-	Descriptor* desc = Descriptor::find(save);
+	Descriptor* desc = _descriptor.find(save);
 	ASS(! desc->allocated);
 	desc->size = _reserveBytesAvailable;
-	desc->timestamp = ++Descriptor::globalTimestamp;
+	desc->timestamp = ++_descriptor.globalTimestamp;
 #if TRACE_ALLOCATIONS
 	cout << *desc << ": RR\n" << flush;
 #endif
@@ -827,12 +819,12 @@ void* Allocator::allocateUnknown(size_t size)
   result += sizeof(Known);
 
 #if VDEBUG && DESCRIPTOR_ON
-  Descriptor* desc = Descriptor::find(result);
+  Descriptor* desc = _descriptor.find(result);
   ASS(! desc->allocated);
 
   desc->address = result;
   desc->cls = className;
-  desc->timestamp = ++Descriptor::globalTimestamp;
+  desc->timestamp = ++_descriptor.globalTimestamp;
   desc->size = size;
   desc->allocated = 1;
   desc->known = 0;
@@ -872,9 +864,9 @@ void* Allocator::allocateUnknown(size_t size)
  * Find a descriptor in the map, and if it is not there, add it.
  * @since 14/12/2005 Bellevue
  */
-Allocator::Descriptor* Allocator::Descriptor::find (const void* addr)
+Allocator::Descriptor* Allocator::DescriptorStore::find (const void* addr)
 {    
-  CALL("Allocator::Descriptor::find");
+  CALL("Allocator::DescriptorStore::find");
   BYPASSING_ALLOCATOR;
 
   if (noOfEntries >= maxEntries) { // too many entries
@@ -920,7 +912,7 @@ Allocator::Descriptor* Allocator::Descriptor::find (const void* addr)
   noOfEntries++;
 
   return desc;
-} // Allocator::Descriptor::find
+} // Allocator::DescriptorStore::find
 
 /**
  * Output the string description of the descriptor to an ostream.
@@ -962,9 +954,9 @@ Allocator::Descriptor::Descriptor ()
  * The FNV-hashing.
  * @since 31/03/2006 Bellevue
  */
-unsigned Allocator::Descriptor::hash (const void* addr)
+unsigned Allocator::DescriptorStore::hash (const void* addr)
 {
-  CALL("Allocator::Descriptor::hash");
+  CALL("Allocator::DescriptorStore::hash");
 
   char* val = reinterpret_cast<char*>(&addr);
   unsigned hash = 2166136261u;
@@ -972,7 +964,7 @@ unsigned Allocator::Descriptor::hash (const void* addr)
     hash = (hash ^ val[i]) * 16777619u;
   }
   return hash;
-} // Allocator::Descriptor::hash(const char* str)
+} // Allocator::DescriptorStore::hash(const char* str)
 
 #endif
 
