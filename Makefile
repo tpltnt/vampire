@@ -752,7 +752,11 @@ doc:
 	rm -fr doc/html
 	doxygen config.doc
 
-.PHONY: doc clean clausify_src api_src
+check:
+	@which $(CXX)
+	@which $(CC)
+
+.PHONY: doc check clean clausify_src api_src
 
 ###########################
 # include header dependencies

@@ -104,7 +104,7 @@ MainLoopResult MainLoopScheduler::run() {
 					if( (e.result.terminationReason == Statistics::SATISFIABLE) ||
 							exausted()){
 						result =  &e.result;
-						cout << "Satisfiable found" << endl;
+						cout << "Satisfiable found" << endl;//TODO: [dmitry] It can be a wrong output if strategy pool is empty and the last one have not solved the problem
 						cout << "Strategy " << _mlcl[k] -> _id << " found result in " << _mlcl[k]->elapsed() << endl;
 						deleteContext(k);
 						break;

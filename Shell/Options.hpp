@@ -237,6 +237,7 @@ public:
     SSPLITTING_NONSPLITTABLE_COMPONENTS,
 
     STATISTICS,
+	STRATEGY_WEIGHT,
     SUPERPOSITION_FROM_VARIABLES,
     SYMBOL_PRECEDENCE,
 
@@ -691,6 +692,9 @@ public:
    */
   int timeLimitInDeciseconds() const { return _timeLimitInDeciseconds; }
   unsigned int localTimeLimitInDeciseconds() const { return _localTimeLimitInDeciseconds; }
+  const unsigned int strategyWeight() const {return _strategy_weight; }
+  void setStrategyWeight(unsigned int w) {_strategy_weight = w; }
+
   static int readTimeLimit(const char* val);
   size_t memoryLimit() const { return _memoryLimit; }
   int inequalitySplitting() const { return _inequalitySplitting; }
@@ -1051,6 +1055,7 @@ private:
   float _ssplittingFlushQuotient;
   SSplittingNonsplittableComponents _ssplittingNonsplittableComponents;
   Statistics _statistics;
+  unsigned int _strategy_weight;
   bool _superpositionFromVariables;
   SymbolPrecedence _symbolPrecedence;
 

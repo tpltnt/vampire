@@ -32,7 +32,7 @@ MainLoopContext* MainLoopContext::currentContext = 0;
 
 #if VDEBUG
 		cout << "Creating context " << _id << " with " << opts.localTimeLimitInDeciseconds() <<
-				" and " << opts.timeLimitInDeciseconds() << " local and global time" << endl;
+				" and " << opts.timeLimitInDeciseconds() << " local and global time and weight " << opts.strategyWeight() << endl;
 #endif//VDEBUG
 
 		// We must copy the problem otherwise we share clauses
@@ -42,6 +42,8 @@ MainLoopContext* MainLoopContext::currentContext = 0;
 
 		//TODO - why do we need to store prb and opts if they will be in env?
 		_env = new Environment(*Lib::env,opts);
+
+		_weight = opts.strategyWeight();
 	}
 
 	MainLoopContext::~MainLoopContext() {
@@ -50,7 +52,7 @@ MainLoopContext* MainLoopContext::currentContext = 0;
 		if(_initialised) cleanup();
 
 #if VDEBUG
-		cout << "Deleting context " <<  _id << endl;
+		std::cout << "Deleting context " <<  _id << " (weight is " << _weight << ")" << std::endl;
 #endif //VDEBUG
 
                 ASS(_env); ASS(_prb);
@@ -65,7 +67,7 @@ MainLoopContext* MainLoopContext::currentContext = 0;
 		Lib::env = _env;
 		_startTime = _env -> timer-> elapsedMilliseconds();
 #if VDEBUG
-		std::cout << "Switching in " << _id << ". Local time limit: " << _env->options->localTimeLimitInDeciseconds() <<
+		std::cout << "Switching in " << _id << " (weight is " << _weight << "). Local time limit: " << _env->options->localTimeLimitInDeciseconds() <<
 				" dsec, elapsed so far: " << _elapsed << " msec" <<
 				std::endl;
 #endif //VDEBUG
@@ -81,7 +83,7 @@ MainLoopContext* MainLoopContext::currentContext = 0;
 
 		_elapsed += (endTime - _startTime);
 #if VDEBUG
-		std::cout << "Switching out " << _id << ". Local time limit: " << _env->options->localTimeLimitInDeciseconds() <<
+		std::cout << "Switching out " << _id << " (weight is " << _weight << "). Local time limit: " << _env->options->localTimeLimitInDeciseconds() <<
 				" dsec, elapsed so far: " << _elapsed << " msec" <<
 				std::endl;
 #endif //VDEBUG
@@ -95,7 +97,7 @@ MainLoopContext* MainLoopContext::currentContext = 0;
 		ASS(!_initialised);
 
 #if VDEBUG
-		cout << "Initialising context " <<  _id << endl;
+		std::cout << "Initialising context " <<  _id << " (weight is " << _weight << ")" << std::endl;
 #endif //VDEBUG
 
 		AutoSwitch s(this);
@@ -112,20 +114,20 @@ MainLoopContext* MainLoopContext::currentContext = 0;
 #endif //VDEBUG
 
 		AutoSwitch s(this);
-		cout << "Strategy " << _id << " finished after using " << _elapsed << endl;
+		cout << "Strategy " << _id << " (weight is " << _weight << ") finished after using " << _elapsed << endl;
 		_initialised = false;
 	}
 
 	void MainLoopContext::doStep(unsigned int timeSlice) {
 		CALL("MainLoopContext::doStep");
 
-		_timeBudget += timeSlice;
+		_timeBudget += (_weight*timeSlice);
 		if(_elapsed >= _timeBudget) return;
 
 		if(!_initialised) init(); //Lazy initialisation in order to work with huge number of contexts
 
 #if VDEBUG
-		cout << "Doing steps in context " <<  _id << " within time slice " << timeSlice << " msec" << endl;
+		cout << "Doing steps in context " <<  _id << " (weight is " << _weight << ") within time slice " << (_weight*timeSlice) << " msec" << endl;
 #endif //VDEBUG
 
 		AutoSwitch s(this);
@@ -133,7 +135,7 @@ MainLoopContext* MainLoopContext::currentContext = 0;
 			_ml -> doOneAlgorithmStep();
 
 #if VDEBUG
-		cout << "Finished step " << _steps << " in context " <<  _id << endl;
+		std::cout << "Finished step " << _steps << " in context " <<  _id << " (weight is " << _weight << ")" << std::endl;
 #endif //VDEBUG
 
 			_steps++;

@@ -73,6 +73,17 @@ public:
 		_timeBudget += budget;
 	}*/
 
+	inline
+	const unsigned int weight() const {
+		return _weight;
+	}
+
+	inline
+	void setWeight(unsigned int w) {
+		ASS(w > 0);
+		_weight = w;
+	}
+
 protected:
 	// Switch into this context
 	void switchIn();
@@ -101,6 +112,8 @@ private:
 	bool _initialised;
 
 	unsigned int _steps;
+
+	unsigned int _weight;
 
 };
 

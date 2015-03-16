@@ -303,6 +303,7 @@ const char* Options::Constants::_optionNames[] = {
   "ssplitting_flush_quotient",
   "ssplitting_nonsplittable_components",
   "statistics",
+  "strategy_weight",
   "superposition_from_variables",
   "symbol_precedence",
 
@@ -400,6 +401,7 @@ const char* Options::Constants::_shortNames[] = {
   "ssnc",
   "st",
   "stl",
+  "strw",
   "svs",
 
   "t",
@@ -488,6 +490,8 @@ int Options::Constants::shortNameIndexes[] = {
   SSPLITTING_NONSPLITTABLE_COMPONENTS,
   SINE_TOLERANCE,
   SIMULATED_TIME_LIMIT,
+
+  STRATEGY_WEIGHT,
 
   SAT_VAR_SELECTOR,
 
@@ -1010,6 +1014,7 @@ Options::Options ()
   _ssplittingFlushQuotient(1.5f),
   _ssplittingNonsplittableComponents(SSNS_KNOWN),
   _statistics(STATISTICS_FULL),
+  _strategy_weight(1),
   _superpositionFromVariables(true),
   _symbolPrecedence(BY_ARITY),
 
@@ -1733,6 +1738,14 @@ void Options::set(const char* name,const char* value, int index)
     case STATISTICS:
       _statistics = (Statistics)Constants::statisticsValues.find(value);
       return;
+
+    case STRATEGY_WEIGHT:
+      if (!Int::stringToUnsignedInt(value,unsignedValue) || (unsignedValue == 0)) {
+    	  	  USER_ERROR("strategy_weight must greater than or equal to 1");
+      }
+      _strategy_weight = unsignedValue;
+      return;
+
     case SUPERPOSITION_FROM_VARIABLES:
       _superpositionFromVariables = onOffToBool(value,name);
       return;
