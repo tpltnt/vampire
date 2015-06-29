@@ -217,9 +217,10 @@ private:
     // i.e. QRS_QUERY_BANK as defined in Indexing/LiteralSubstitutionTree
     static const int query_bank = 0;
 
+    // map orig lits to subs related to them
     // store seen substitutions by their size
     // when checking for inclusion we cannot be included by a bigger one!
-    Array<List<DHMap<unsigned,TermList>*>*> subs;
+    DHMap<Literal*,Array<List<DHMap<unsigned,TermList>*>*>*> lit2subs;
 
     DHMap<unsigned,TermList>* translate(Literal* orig, RobSubstitution* subst){
       CALL("DismatchingConstraintsShallow::translate");
@@ -235,21 +236,32 @@ private:
       return m;
     }
 
+    Array<List<DHMap<unsigned,TermList>*>*>* getSubs(Literal* orig){
+      Array<List<DHMap<unsigned,TermList>*>*>* ret;
+      if(!lit2subs.find(orig,ret)){
+        ret = new Array<List<DHMap<unsigned,TermList>*>*>();
+        lit2subs.insert(orig,ret);
+      }
+      return ret;
+    }
+
     void add(Literal* orig, Literal* inst, RobSubstitution* subst) {
       CALL("DismatchingConstraintsShallow::add");
       DHMap<unsigned,TermList>* m = translate(orig,subst);
       unsigned size = m->size();
-      List<DHMap<unsigned,TermList>*>* subsList = subs.get(size);
-      subs[size] = subsList->cons(m);
+      Array<List<DHMap<unsigned,TermList>*>*>* subs = getSubs(orig); 
+      List<DHMap<unsigned,TermList>*>* subsList = subs->get(size);
+      (*subs)[size] = subsList->cons(m);
     }
 
     bool shouldBlock(Literal* orig, Literal* inst, RobSubstitution* subst) {
       CALL("DismatchingConstraintsShallow::shouldBlock");
 
       DHMap<unsigned,TermList>* m = translate(orig,subst);
+      Array<List<DHMap<unsigned,TermList>*>*>* subs = getSubs(orig);
 
       for(unsigned i=1;i<m->size();i++){
-        List<DHMap<unsigned,TermList>*>::Iterator it(subs.get(i)); 
+        List<DHMap<unsigned,TermList>*>::Iterator it(subs->get(i)); 
         while(it.hasNext()){
           DHMap<unsigned,TermList>* existing = it.next();
           // now check if existing generalises subst
