@@ -19,6 +19,7 @@
 #include "Kernel/MainLoop.hpp"
 #include "Kernel/Ordering.hpp"
 #include "Kernel/RCClauseStack.hpp"
+#include "Kernel/TermIterators.hpp"
 
 #include "Indexing/ClauseVariantIndex.hpp"
 #include "Indexing/IndexManager.hpp"
@@ -162,20 +163,25 @@ private:
   bool _use_dm;
   bool _shallow_dm;
 
+  /**
+   * Dismatching constraints should provide these two functions
+   */
   struct DismatchingConstraints {
-    virtual void add(Literal* org, Literal* inst,ResultSubstitution& subst) = 0;
-    virtual bool shouldBlock(Literal* org, Literal* inst, ResultSubstitution& subst) = 0;
+    virtual void add(Literal* org, Literal* inst,RobSubstitution* subst) = 0;
+    virtual bool shouldBlock(Literal* org, Literal* inst, RobSubstitution* subst) = 0;
   };
 
   /**
    * A struct for holding clause's dms, on per literal basis.
+   * This version is general i.e allows arbitary substitutions
    */
   struct DismatchingConstraintsGeneral : public DismatchingConstraints {
     typedef DHMap<Literal*,DismatchingLiteralIndex*> Lit2Index;
 
     Lit2Index lit2index;
 
-    void add(Literal* orig, Literal* inst, ResultSubstitution& subst) {
+    void add(Literal* orig, Literal* inst, RobSubstitution* subst) {
+      CALL("DismatchingConstraintsGeneral::add");
       DismatchingLiteralIndex* index;
       if (!lit2index.find(orig,index)) {
         LiteralIndexingStructure * is = new LiteralSubstitutionTreeWithoutTop();
@@ -185,7 +191,8 @@ private:
       index->addLiteral(inst);
     }
 
-    bool shouldBlock(Literal* orig, Literal* inst, ResultSubstitution& subst) {
+    bool shouldBlock(Literal* orig, Literal* inst, RobSubstitution* subst) {
+      CALL("DismatchingConstraintsGeneral::shouldBlock");
       DismatchingLiteralIndex* index;
       // if we store for orig a generalization of its instance inst, we block:
       return lit2index.find(orig,index) && index->getGeneralizations(inst,false,false).hasNext();
@@ -197,6 +204,73 @@ private:
         DismatchingLiteralIndex* index = iit.next();
         delete index;
       }
+    }
+  };
+
+  /**
+   * A struct for holding clause's dms, on per literal basis.
+   * This version is shallow i.e. assumes substitutions are shallow 
+   */
+  struct DismatchingConstraintsShallow : public DismatchingConstraints {
+
+    // Very importantly, we assume that the variable bank used is 0
+    // i.e. QRS_QUERY_BANK as defined in Indexing/LiteralSubstitutionTree
+    static const int query_bank = 0;
+
+    // store seen substitutions by their size
+    // when checking for inclusion we cannot be included by a bigger one!
+    Array<List<DHMap<unsigned,TermList>*>*> subs;
+
+    DHMap<unsigned,TermList>* translate(Literal* orig, RobSubstitution* subst){
+      CALL("DismatchingConstraintsShallow::translate");
+
+      DHMap<unsigned,TermList>* m = new DHMap<unsigned,TermList>();
+      VariableIterator vit(orig);
+      while(vit.hasNext()){
+        TermList var = vit.next();
+        ASS(var.isVar());
+        TermList t = subst->apply(var,query_bank);
+        m->insert(var.var(),t);
+      }
+      return m;
+    }
+
+    void add(Literal* orig, Literal* inst, RobSubstitution* subst) {
+      CALL("DismatchingConstraintsShallow::add");
+      DHMap<unsigned,TermList>* m = translate(orig,subst);
+      unsigned size = m->size();
+      List<DHMap<unsigned,TermList>*>* subsList = subs.get(size);
+      subs[size] = subsList->cons(m);
+    }
+
+    bool shouldBlock(Literal* orig, Literal* inst, RobSubstitution* subst) {
+      CALL("DismatchingConstraintsShallow::shouldBlock");
+
+      DHMap<unsigned,TermList>* m = translate(orig,subst);
+
+      for(unsigned i=1;i<m->size();i++){
+        List<DHMap<unsigned,TermList>*>::Iterator it(subs.get(i)); 
+        while(it.hasNext()){
+          DHMap<unsigned,TermList>* existing = it.next();
+          // now check if existing generalises subst
+          // i.e. if they are consistent and the size of existing
+          //      is smaller or equal to subst
+          VirtualIterator<unsigned> dit = existing->domain();
+          while(dit.hasNext()){
+            unsigned v = dit.next();
+            // if m binds v it should bind it in the same way
+            TermList other;
+            if(m->find(v,other)){
+              if(!existing->get(v).sameContent(&other)) return true;
+            } 
+          }
+        }
+      }
+
+      return false;
+    }
+
+    ~DismatchingConstraintsShallow() {
     }
   };
 

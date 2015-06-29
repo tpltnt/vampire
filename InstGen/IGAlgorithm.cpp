@@ -334,7 +334,7 @@ bool IGAlgorithm::startGeneratingClause(Clause* orig, ResultSubstitution& subst,
     {
       TimeCounter tc(TC_DISMATCHING);
       // check dismatching constraint here
-      if (dmatch && dmatch->shouldBlock(olit,glit,subst)) {
+      if (dmatch && dmatch->shouldBlock(olit,glit,subst.tryGetRobSubstitution())) {
         RSTAT_CTR_INC("dismatch blocked");
 #if VTRACE_DM
         cout << "[" << dmatch << "] " << "blocking for " << orig->number() << " and " << glit->toString() << endl;
@@ -382,7 +382,12 @@ void IGAlgorithm::finishGeneratingClause(Clause* orig, ResultSubstitution& subst
     if(!_dismatchMap.find(orig,dmatch)) {
       RSTAT_CTR_INC("dismatch created");
 
-      dmatch = new DismatchingConstraintsGeneral();
+      if(_shallow_dm){
+        dmatch = new DismatchingConstraintsShallow(); 
+      }
+      else{
+        dmatch = new DismatchingConstraintsGeneral();
+      }
       ALWAYS(_dismatchMap.insert(orig,dmatch));
 #if VTRACE_DM
       cout << "[" << dmatch << "] "<< "creating for " << orig->toString() << endl;
@@ -393,7 +398,7 @@ void IGAlgorithm::finishGeneratingClause(Clause* orig, ResultSubstitution& subst
 #if VTRACE_DM
       cout << "[" << dmatch << "] "<< "dismatch " << orig->number() << " add " << dm_with->toString() << endl;
 #endif
-    dmatch->add(origLit,dm_with,subst);
+    dmatch->add(origLit,dm_with,subst.tryGetRobSubstitution());
   }
 }
 
