@@ -267,15 +267,20 @@ private:
           // now check if existing generalises subst
           // i.e. if they are consistent and the size of existing
           //      is smaller or equal to subst
+          bool is_gen = true;
           VirtualIterator<unsigned> dit = existing->domain();
           while(dit.hasNext()){
             unsigned v = dit.next();
             // if m binds v it should bind it in the same way
             TermList other;
             if(m->find(v,other)){
-              if(!existing->get(v).sameContent(&other)) return true;
+              if(!existing->get(v).sameContent(&other)){
+                is_gen=false;
+                break;
+              }
             } 
           }
+          if(is_gen) return true;
         }
       }
 
