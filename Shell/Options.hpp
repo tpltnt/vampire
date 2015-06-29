@@ -266,6 +266,16 @@ public:
   };
 
   /**
+   *
+   *
+   */
+  enum class Dismatching : unsigned int {
+    OFF = 0,
+    ON = 1,
+    SHALLOW = 2
+  };
+
+  /**
    * Possible values for the input syntax
    * @since 26/08/2009 Redmond
    */
@@ -1670,7 +1680,7 @@ public:
   bool unusedPredicateDefinitionRemoval() const { return _unusedPredicateDefinitionRemoval.actualValue; }
   void setUnusedPredicateDefinitionRemoval(bool newVal) { _unusedPredicateDefinitionRemoval.actualValue = newVal; }
   bool weightIncrement() const { return _weightIncrement.actualValue; }
-  bool useDM() const { return _use_dm.actualValue; }
+  Dismatching useDM() const { return _use_dm.actualValue; }
   SatSolver satSolver() const { return _satSolver.actualValue; }
   //void setSatSolver(SatSolver newVal) { _satSolver = newVal; }
   bool satLingelingSimilarModels() const { return _satLingelingSimilarModels.actualValue; }
@@ -2178,7 +2188,7 @@ private:
   ChoiceOptionValue<URResolution> _unitResultingResolution;
   BoolOptionValue _unusedPredicateDefinitionRemoval;
   UnsignedOptionValue _updatesByOneConstraint;
-  BoolOptionValue _use_dm;
+  ChoiceOptionValue<Dismatching> _use_dm;
   BoolOptionValue _weightIncrement;
   IntOptionValue _whileNumber;
 

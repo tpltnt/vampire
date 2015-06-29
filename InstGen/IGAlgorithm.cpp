@@ -67,7 +67,8 @@ IGAlgorithm::IGAlgorithm(Problem& prb,const Options& opt)
   _ordering = OrderingSP(Ordering::create(prb, opt));
   _selector = LiteralSelector::getSelector(*_ordering, opt, opt.instGenSelection());
 
-  _use_dm = opt.useDM();
+  _use_dm = opt.useDM()!=Options::Dismatching::OFF;
+  _shallow_dm = opt.useDM()==Options::Dismatching::SHALLOW;
   _use_niceness = (opt.satVarSelector() == Options::SatVarSelector::NICENESS);
 
   _passive.setAgeWeightRatio(_opt.ageRatio(), _opt.weightRatio());
@@ -314,7 +315,7 @@ bool IGAlgorithm::startGeneratingClause(Clause* orig, ResultSubstitution& subst,
 
   // We check and update the dismatching constraints associated
   // with the clause being instantiated
-  DismatchingContraints* dmatch = 0;
+  DismatchingConstraints* dmatch = 0;
   if(_use_dm){
     TimeCounter tc(TC_DISMATCHING);
     _dismatchMap.find(orig,dmatch);
@@ -333,7 +334,7 @@ bool IGAlgorithm::startGeneratingClause(Clause* orig, ResultSubstitution& subst,
     {
       TimeCounter tc(TC_DISMATCHING);
       // check dismatching constraint here
-      if (dmatch && dmatch->shouldBlock(olit,glit)) {
+      if (dmatch && dmatch->shouldBlock(olit,glit,subst)) {
         RSTAT_CTR_INC("dismatch blocked");
 #if VTRACE_DM
         cout << "[" << dmatch << "] " << "blocking for " << orig->number() << " and " << glit->toString() << endl;
@@ -375,13 +376,13 @@ void IGAlgorithm::finishGeneratingClause(Clause* orig, ResultSubstitution& subst
   if(added && _use_dm) {
     TimeCounter tc(TC_DISMATCHING);
 
-    DismatchingContraints* dmatch = 0;
+    DismatchingConstraints* dmatch = 0;
 
     // if dmatch does not exist create it 
     if(!_dismatchMap.find(orig,dmatch)) {
       RSTAT_CTR_INC("dismatch created");
 
-      dmatch = new DismatchingContraints();
+      dmatch = new DismatchingConstraintsGeneral();
       ALWAYS(_dismatchMap.insert(orig,dmatch));
 #if VTRACE_DM
       cout << "[" << dmatch << "] "<< "creating for " << orig->toString() << endl;
@@ -392,7 +393,7 @@ void IGAlgorithm::finishGeneratingClause(Clause* orig, ResultSubstitution& subst
 #if VTRACE_DM
       cout << "[" << dmatch << "] "<< "dismatch " << orig->number() << " add " << dm_with->toString() << endl;
 #endif
-    dmatch->add(origLit,dm_with);
+    dmatch->add(origLit,dm_with,subst);
   }
 }
 

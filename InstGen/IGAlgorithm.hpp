@@ -160,16 +160,22 @@ private:
 
   bool _use_niceness;
   bool _use_dm;
+  bool _shallow_dm;
+
+  struct DismatchingConstraints {
+    virtual void add(Literal* org, Literal* inst,ResultSubstitution& subst) = 0;
+    virtual bool shouldBlock(Literal* org, Literal* inst, ResultSubstitution& subst) = 0;
+  };
 
   /**
    * A struct for holding clause's dms, on per literal basis.
    */
-  struct DismatchingContraints {
+  struct DismatchingConstraintsGeneral : public DismatchingConstraints {
     typedef DHMap<Literal*,DismatchingLiteralIndex*> Lit2Index;
 
     Lit2Index lit2index;
 
-    void add(Literal* orig, Literal* inst) {
+    void add(Literal* orig, Literal* inst, ResultSubstitution& subst) {
       DismatchingLiteralIndex* index;
       if (!lit2index.find(orig,index)) {
         LiteralIndexingStructure * is = new LiteralSubstitutionTreeWithoutTop();
@@ -179,13 +185,13 @@ private:
       index->addLiteral(inst);
     }
 
-    bool shouldBlock(Literal* orig, Literal* inst) {
+    bool shouldBlock(Literal* orig, Literal* inst, ResultSubstitution& subst) {
       DismatchingLiteralIndex* index;
       // if we store for orig a generalization of its instance inst, we block:
       return lit2index.find(orig,index) && index->getGeneralizations(inst,false,false).hasNext();
     }
 
-    ~DismatchingContraints() {
+    ~DismatchingConstraintsGeneral() {
       Lit2Index::Iterator iit(lit2index);
       while(iit.hasNext()){
         DismatchingLiteralIndex* index = iit.next();
@@ -194,7 +200,7 @@ private:
     }
   };
 
-  typedef DHMap<Clause*,DismatchingContraints*> DismatchMap;
+  typedef DHMap<Clause*,DismatchingConstraints*> DismatchMap;
 
   DismatchMap _dismatchMap;
 

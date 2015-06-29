@@ -137,7 +137,8 @@ namespace FMB {
       // this is the new function symbol
       unsigned newf;
 
-      //check if 
+      //check if already introduced def
+      //TODO I should be checking for variants! do I need an index? 
       if(!_introducedNG.find(t,newf)){
 
         // first count the variables in t
