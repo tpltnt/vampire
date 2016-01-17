@@ -187,6 +187,8 @@ public:
   /** Number of SAT calls for Lingeling */
   unsigned satLingelingSATCalls;
 
+  unsigned satZ3SATCalls;
+
   /* the next three variables keep statistics for Vampire default sat solver*/
   unsigned satTWLClauseCount;
   unsigned satTWLVariablesCount;

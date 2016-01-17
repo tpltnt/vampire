@@ -1676,6 +1676,10 @@ public:
   bool showZ3() const { return _showZ3.actualValue; }
   bool z3UnsatCores() const { return _z3UnsatCores.actualValue;}
   bool satFallbackForSMT() const { return _satFallbackForSMT.actualValue; }
+  int  z3TimeLimit() const { return _z3TimeLimit.actualValue;}
+  bool z3QuantifiersExtension() const{ return _z3QuantifiersExtension.actualValue; } 
+  bool z3TryToIgnoreUnknown() const { return _z3TryToIgnoreUnknown.actualValue; }
+  bool z3UseLogic() const { return _z3UseLogic.actualValue; }
 #endif
   bool unusedPredicateDefinitionRemoval() const { return _unusedPredicateDefinitionRemoval.actualValue; }
   void setUnusedPredicateDefinitionRemoval(bool newVal) { _unusedPredicateDefinitionRemoval.actualValue = newVal; }
@@ -2136,6 +2140,10 @@ private:
   BoolOptionValue _showZ3;
   BoolOptionValue _z3UnsatCores;
   BoolOptionValue _satFallbackForSMT;
+  IntOptionValue  _z3TimeLimit;
+  BoolOptionValue _z3QuantifiersExtension;
+  BoolOptionValue _z3TryToIgnoreUnknown;
+  BoolOptionValue _z3UseLogic;
 #endif
   TimeLimitOptionValue _simulatedTimeLimit;
   UnsignedOptionValue _sineDepth;

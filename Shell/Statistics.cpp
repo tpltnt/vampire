@@ -310,7 +310,9 @@ void Statistics::print(ostream& out)
         satLingelingClauses+satLingelingClauses+satLingelingClauses+
         satLingelingSATCalls+satTWLClauseCount+satTWLVariablesCount+
         satTWLSATCalls+satClauses+unitSatClauses+binarySatClauses+
-        learntSatClauses+learntSatLiterals+satPureVarsEliminated);
+        learntSatClauses+learntSatLiterals+satPureVarsEliminated+
+        satZ3SATCalls
+        );
   COND_OUT("SAT solver clauses", satClauses);
   COND_OUT("SAT solver unit clauses", unitSatClauses);
   COND_OUT("SAT solver binary clauses", binarySatClauses);
@@ -323,6 +325,7 @@ void Statistics::print(ostream& out)
   COND_OUT("TWLsolver clauses", satTWLClauseCount);
   COND_OUT("TWLsolver variables", satTWLVariablesCount);
   COND_OUT("TWLsolver calls for satisfiability", satTWLSATCalls);
+  COND_OUT("Z3 calls for satisfiability", satZ3SATCalls);
   COND_OUT("Pure propositional variables eliminated by SAT solver", satPureVarsEliminated);
   SEPARATOR;
 

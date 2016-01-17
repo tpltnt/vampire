@@ -1148,6 +1148,37 @@ void Options::Options::init()
     _nonliteralsInClauseWeight.addProblemConstraint(hasNonUnits());
     _nonliteralsInClauseWeight.setRandomChoices({"on","off"});
 
+#if VZ3
+    _z3TimeLimit = IntOptionValue("z3_time_limit","z3tl",0);
+    _z3TimeLimit.description="Set a time limit for z3; 0 means none.";
+    _z3TimeLimit.tag(OptionTag::AVATAR);
+    _z3TimeLimit.reliesOn(_satSolver.is(equal(SatSolver::Z3)));
+    _z3TimeLimit.setExperimental();
+    _lookup.insert(&_z3TimeLimit);
+
+
+    _z3QuantifiersExtension = BoolOptionValue("z3_quantifier_extension","z3qe",false);
+    _z3QuantifiersExtension.description="Set a time limit for z3; 0 means none.";
+    _z3QuantifiersExtension.tag(OptionTag::AVATAR);
+    _z3QuantifiersExtension.reliesOn(_satSolver.is(equal(SatSolver::Z3)));
+    _z3QuantifiersExtension.setExperimental();
+    _lookup.insert(&_z3QuantifiersExtension);
+
+    _z3TryToIgnoreUnknown = BoolOptionValue("z3_try_ignore_unknown","z3tiu",false);
+    _z3TryToIgnoreUnknown.description="Try and ignore Unknown result when there is a model";
+    _z3TryToIgnoreUnknown.tag(OptionTag::AVATAR);
+    _z3TryToIgnoreUnknown.reliesOn(_satSolver.is(equal(SatSolver::Z3)));
+    _z3TryToIgnoreUnknown.setExperimental();
+    _lookup.insert(&_z3TryToIgnoreUnknown);
+
+    _z3UseLogic = BoolOptionValue("z3_use_logic","z3ul",false);
+    _z3UseLogic.description="Tell Z3 which logic we are in, if possible";
+    _z3UseLogic.tag(OptionTag::AVATAR);
+    _z3UseLogic.reliesOn(_satSolver.is(equal(SatSolver::Z3)));
+    _z3UseLogic.setExperimental();
+    _lookup.insert(&_z3UseLogic);
+#endif
+
 //*********************** SAT solver (used in various places)  ***********************
 
     _satClauseActivityDecay = FloatOptionValue("sat_clause_activity_decay","",1.001f);

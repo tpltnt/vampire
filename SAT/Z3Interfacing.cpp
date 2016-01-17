@@ -12,10 +12,13 @@
 #include "SATClause.hpp"
 #include "SATInference.hpp"
 
+#include "Shell/Statistics.hpp"
+
 #include "Lib/Environment.hpp"
 #include "Lib/System.hpp"
 #include "Kernel/Signature.hpp"
 #include "Kernel/Sorts.hpp"
+#include "Kernel/SortHelper.hpp"
 
 #include "Z3Interfacing.hpp"
 
@@ -28,9 +31,11 @@ using namespace Lib;
 //using namespace z3;
   
 Z3Interfacing::Z3Interfacing(const Shell::Options& opts,SAT2FO& s2f, bool unsatCoresForAssumptions):
-  _varCnt(0), sat2fo(s2f),_status(SATISFIABLE), _solver(_context),
+  _varCnt(0), sat2fo(s2f),_status(SATISFIABLE), 
+  _solver(_context, opts.z3UseLogic() ? env.property->getSMTLogic(true).c_str() : "AUFNIRA"), 
   _model(_solver.get_first_model()), _assumptions(_context), _unsatCoreForAssumptions(unsatCoresForAssumptions),
-  _showZ3(opts.showZ3()),_unsatCoreForRefutations(opts.z3UnsatCores())
+  _showZ3(opts.showZ3()),_unsatCoreForRefutations(opts.z3UnsatCores()),
+  _quantifiersExtension(opts.z3QuantifiersExtension()), _tryIgnoreUnknown(opts.z3TryToIgnoreUnknown())
 {
   CALL("Z3Interfacing::Z3Interfacing");
 
@@ -79,6 +84,7 @@ SATSolver::Status Z3Interfacing::solve(unsigned conflictCountLimit)
 {
   CALL("Z3Interfacing::addClause");
   BYPASSING_ALLOCATOR;
+  env.statistics->satZ3SATCalls++;
 
   z3::check_result result = _assumptions.empty() ? _solver.check() : _solver.check(_assumptions);
 
@@ -98,7 +104,18 @@ SATSolver::Status Z3Interfacing::solve(unsigned conflictCountLimit)
       //}
       break;
     case z3::check_result::unknown:
-      _status = UNKNOWN;
+      if(_tryIgnoreUnknown){
+        try{
+          _model = _solver.get_model();
+          _status = SATISFIABLE;
+        }
+        catch(z3::exception e){
+          _status = UNKNOWN;
+        }
+      }
+      else{
+        _status = UNKNOWN;
+      }
       break;
 #if VDEBUG
     default: ASSERTION_VIOLATION;
@@ -243,18 +260,34 @@ z3::sort Z3Interfacing::getz3sort(unsigned s)
 */
 }
 
+
+z3::expr Z3Interfacing::getz3exprForGroundLit(Literal* lit)
+{
+  CALL("Z3Interfacing::getz3exprForGroundLit");
+  static z3::expr_vector vars = z3::expr_vector(_context); //dummy
+  return getz3expr(lit,true,true,vars);
+}
+
+z3::expr Z3Interfacing::getz3exprForNonGroundLit(Literal* lit)
+{
+  CALL("Z3Interfacing::getz3exprForNonGroundLit");
+  z3::expr_vector vars = z3::expr_vector(_context);
+  z3::expr body =  getz3expr(lit,true,false,vars);
+  return z3::forall(vars,body);
+}
+
 /**
  * Translate a Vampire term into a Z3 term
  * - Assumes term is ground
  * - Translates the ground structure
  * - Some interpreted functions/predicates are handled
  */
-z3::expr Z3Interfacing::getz3expr(Term* trm,bool isLit)
+z3::expr Z3Interfacing::getz3expr(Term* trm,bool isLit,bool isGround, z3::expr_vector& vars)
 {
   CALL("Z3Interfacing::getz3expr");
   BYPASSING_ALLOCATOR;
   ASS(trm);
-  ASS(trm->ground());
+  ASS(!isGround || trm->ground());
 
   //cout << "getz3expr of " << trm->toString() << endl;
 
@@ -325,8 +358,18 @@ z3::expr Z3Interfacing::getz3expr(Term* trm,bool isLit)
     z3::expr_vector args = z3::expr_vector(_context);
     for(unsigned i=0;i<trm->arity();i++){
       TermList* arg = trm->nthArgument(i);
-      ASS(!arg->isVar());// Term should be ground
-      args.push_back(getz3expr(arg->term(),false));
+      ASS(!isGround || !arg->isVar());// Term should be ground unless we know it doesn't have to be!
+      if(arg->isVar()){
+        // we will create a constant for the var as the forall thing in the API will transform
+        // these into bound variables
+        z3::sort vsrt = getz3sort(SortHelper::getVariableSort(*arg,trm));
+        z3::expr vcon = _context.constant(("X"+Lib::Int::toString(arg->var())).c_str(),vsrt); 
+        args.push_back(vcon);
+        vars.push_back(vcon);
+      }
+      else{
+        args.push_back(getz3expr(arg->term(),false,isGround,vars));
+      }
     }
 
     // dummy return
@@ -545,7 +588,7 @@ z3::expr Z3Interfacing::getRepresentation(SATLiteral slit)
     //cout << "getRepresentation of " << lit->toString() << endl;
     // Now translate it into an SMT object 
     try{
-      z3::expr e = getz3expr(lit,true);
+      z3::expr e = getz3exprForGroundLit(lit); 
       //cout << "got rep " << e << endl;
       if(slit.isNegative()) return !e;
       return e;
@@ -555,6 +598,13 @@ z3::expr Z3Interfacing::getRepresentation(SATLiteral slit)
      ASSERTION_VIOLATION_REP("Failed to create Z3 rep for " + lit->toString());
     }
   }
+
+  // we add the qua
+  if(_quantifiersExtension && lit && !lit->ground()){
+    z3::expr e = getz3exprForNonGroundLit(lit);
+    _solver.add(e); 
+  }
+
   //if non ground then just create a propositional variable
   vstring name = "v"+Lib::Int::toString(slit.var());
   z3::expr e = _context.bool_const(name.c_str());

@@ -16,6 +16,12 @@
 namespace SAT
 {
 
+#if VZ3
+void SAT2FO::recordNonGroundComponent(SATLiteral sl, Literal* lit){
+ _ngMap.insert(sl,lit);
+}
+#endif
+
 /**
  * Return number of a fresh SAT variable that will not be assigned to any Literal.
  */
@@ -44,6 +50,11 @@ Literal* SAT2FO::toFO(SATLiteral sl) const
 
   Literal* posLit;
   if(!_posMap.findObj(sl.var(), posLit)) {
+#if VZ3
+    if(_ngMap.find(sl,posLit)){
+      return posLit;
+    }
+#endif
     return 0;
   }
   Literal* res = sl.polarity() ? posLit : Literal::complementaryLiteral(posLit);

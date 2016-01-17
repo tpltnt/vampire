@@ -199,6 +199,38 @@ public:
   bool usesSort(unsigned sort) const { return _usesSort[sort]; }
   bool usesSingleSort() const { return _sortsUsed==1; }
   unsigned sortsUsed() const { return _sortsUsed;}
+
+  vstring getSMTLogic(bool makeQF=false) const {
+    
+    vstring logic = "";
+    if(makeQF || _allClausesGround) logic = "QF_";
+
+    // Arrays
+    if(hasProp(PR_HAS_ARRAYS)) logic += "A";
+
+    // Uninterpreted functions
+    logic += "UF";
+
+    // Linear or non-linear
+    if(hasProp(PR_INTEGER_NONLINEAR) || hasProp(PR_RAT_NONLINEAR) || hasProp(PR_REAL_NONLINEAR)){
+      logic += "N";
+    }else if(hasProp(PR_INTEGER_LINEAR) || hasProp(PR_RAT_LINEAR) || hasProp(PR_REAL_LINEAR)){
+      logic += "L";
+    }
+
+    // Real or integer
+    if(hasProp(PR_HAS_INTEGERS)){ logic += "I"; }
+    if(hasProp(PR_HAS_REALS) || hasProp(PR_HAS_RATS)){
+      logic += "R";
+    }
+    if(hasProp(PR_HAS_INTEGERS) || hasProp(PR_HAS_REALS) || hasProp(PR_HAS_RATS)){
+      logic += "A";
+    }
+
+    cout << "FOUND SMT logic: "  << logic << endl;
+    return logic; 
+  }
+
  private:
   // constructor, operators new and delete
   explicit Property();

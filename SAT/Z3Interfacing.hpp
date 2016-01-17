@@ -135,7 +135,9 @@ private:
         return ite(e >= 0, to_int(e), ceiling(e));
   }
 public:
-  z3::expr getz3expr(Term* trm,bool islit);
+  z3::expr getz3expr(Term* trm,bool islit,bool isGround,z3::expr_vector& vars);
+  z3::expr getz3exprForGroundLit(Literal* lit);
+  z3::expr getz3exprForNonGroundLit(Literal* lit);
 private:
   z3::expr getRepresentation(SATLiteral lit);
 
@@ -149,6 +151,8 @@ private:
 
   bool _showZ3;
   bool _unsatCoreForRefutations;
+  bool _quantifiersExtension;
+  bool _tryIgnoreUnknown;
 };
 
 }//end SAT namespace

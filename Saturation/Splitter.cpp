@@ -1196,6 +1196,16 @@ SplitLevel Splitter::addNonGroundComponent(unsigned size, Literal* const * lits,
           [] (Literal* l) { return !l->ground(); } )); //none of the literals can be ground
 
   SATLiteral posLit(_sat2fo.createSpareSatVar(), true);
+  
+#if VZ3
+  // This is an experimental bit for working with z3  
+  // record in _sat2fo the non-ground unit components that are unit clauses themselves
+  // TODO: make it work with non-unit clauses as this is very restrictive
+   if(size==1 && orig->size()==1 && !orig->splits()){
+    _sat2fo.recordNonGroundComponent(posLit,*lits);
+   }
+#endif
+
   SplitLevel compName = getNameFromLiteralUnsafe(posLit);
   ASS_EQ(compName&1,0); //positive levels are even
   ASS_GE(compName,_db.size());

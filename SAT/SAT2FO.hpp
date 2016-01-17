@@ -36,6 +36,13 @@ public:
   SATClause* createConflictClause(LiteralStack& unsatCore, Inference::Rule rule=Inference::THEORY);
 
   unsigned maxSATVar() const { return _posMap.getNumberUpperBound(); }
+
+// experimental idea
+#if VZ3
+  DHMap<SATLiteral,Literal*> _ngMap;
+  void recordNonGroundComponent(SATLiteral sl, Literal* lit);
+#endif
+
 private:
   typedef Numbering<Literal *, 1 /* variables start from 1 */ > TwoWayMap;
   TwoWayMap _posMap;
