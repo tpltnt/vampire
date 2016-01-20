@@ -1177,6 +1177,13 @@ void Options::Options::init()
     _z3UseLogic.reliesOn(_satSolver.is(equal(SatSolver::Z3)));
     _z3UseLogic.setExperimental();
     _lookup.insert(&_z3UseLogic);
+
+    _z3DoNotInterpretNonLinear = BoolOptionValue("z3_no_nonlinear","z3nn",false);
+    _z3DoNotInterpretNonLinear.description="Leave non-linear arithmetic uninterpreted";
+    _z3DoNotInterpretNonLinear.tag(OptionTag::AVATAR);
+    _z3DoNotInterpretNonLinear.reliesOn(_satSolver.is(equal(SatSolver::Z3)));
+    _z3DoNotInterpretNonLinear.setExperimental();
+    _lookup.insert(&_z3DoNotInterpretNonLinear);
 #endif
 
 //*********************** SAT solver (used in various places)  ***********************

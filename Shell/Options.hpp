@@ -1680,6 +1680,7 @@ public:
   bool z3QuantifiersExtension() const{ return _z3QuantifiersExtension.actualValue; } 
   bool z3TryToIgnoreUnknown() const { return _z3TryToIgnoreUnknown.actualValue; }
   bool z3UseLogic() const { return _z3UseLogic.actualValue; }
+  bool z3DoNotInterpretNonLinear() const { return _z3DoNotInterpretNonLinear.actualValue; }
 #endif
   bool unusedPredicateDefinitionRemoval() const { return _unusedPredicateDefinitionRemoval.actualValue; }
   void setUnusedPredicateDefinitionRemoval(bool newVal) { _unusedPredicateDefinitionRemoval.actualValue = newVal; }
@@ -2144,6 +2145,7 @@ private:
   BoolOptionValue _z3QuantifiersExtension;
   BoolOptionValue _z3TryToIgnoreUnknown;
   BoolOptionValue _z3UseLogic;
+  BoolOptionValue _z3DoNotInterpretNonLinear;
 #endif
   TimeLimitOptionValue _simulatedTimeLimit;
   UnsignedOptionValue _sineDepth;

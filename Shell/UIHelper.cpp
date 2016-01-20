@@ -338,7 +338,7 @@ void UIHelper::outputResult(ostream& out)
       out << "Refutation not found, inferences skipped due to colors\n";
     }
     else if(env.statistics->smtReturnedUnknown){
-      out << "Refutation not found, SMT solver inside AVATAR returned Unknown";
+      out << "Refutation not found, SMT solver inside AVATAR returned Unknown\n";
     }
     else {
       out << "Refutation not found, incomplete strategy\n";

@@ -153,6 +153,7 @@ private:
   bool _unsatCoreForRefutations;
   bool _quantifiersExtension;
   bool _tryIgnoreUnknown;
+  bool _ignoreNonLinear;
 };
 
 }//end SAT namespace

@@ -35,7 +35,8 @@ Z3Interfacing::Z3Interfacing(const Shell::Options& opts,SAT2FO& s2f, bool unsatC
   _solver(_context, opts.z3UseLogic() ? env.property->getSMTLogic(true).c_str() : "AUFNIRA"), 
   _model(_solver.get_first_model()), _assumptions(_context), _unsatCoreForAssumptions(unsatCoresForAssumptions),
   _showZ3(opts.showZ3()),_unsatCoreForRefutations(opts.z3UnsatCores()),
-  _quantifiersExtension(opts.z3QuantifiersExtension()), _tryIgnoreUnknown(opts.z3TryToIgnoreUnknown())
+  _quantifiersExtension(opts.z3QuantifiersExtension()), _tryIgnoreUnknown(opts.z3TryToIgnoreUnknown()),
+  _ignoreNonLinear(opts.z3DoNotInterpretNonLinear())
 {
   CALL("Z3Interfacing::Z3Interfacing");
 
@@ -387,10 +388,13 @@ z3::expr Z3Interfacing::getz3expr(Term* trm,bool isLit,bool isGround, z3::expr_v
     // - unary funs/preds like is_rat interpretation unclear
     if(symb->interpreted()){
       Interpretation interp = static_cast<Signature::InterpretedSymbol*>(symb)->getInterpretation();
+
+      if(!_ignoreNonLinear || !theory->isNonLinearOperation(interp)){
+
       bool skip=false; 
       unsigned argsToPop=theory->getArity(interp);
 
-      if(theory->isStructuredSortInterpretation(interp)){
+      if(theory->isStructuredSortInterpretation(interp)){ 
 
         switch(theory->convertToStructured(interp)){
           case Theory::StructuredSortInterpretation::ARRAY_SELECT:
@@ -562,6 +566,7 @@ z3::expr Z3Interfacing::getz3expr(Term* trm,bool isLit,bool isGround, z3::expr_v
         return ret;
       } 
 
+    }
     }
     //TODO check domain_sorts for args in equality and interpretted?
     z3::sort_vector domain_sorts = z3::sort_vector(_context);
