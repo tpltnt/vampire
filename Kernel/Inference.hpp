@@ -206,6 +206,8 @@ public:
     TERM_ALGEBRA_INJECTIVITY,
     /** inference rule for term algebras (no cyclic terms)*/
     TERM_ALGEBRA_ACYCLICITY,
+    /** structural induction */
+    STRUCTURAL_INDUCTION,
     /** one of two axioms of FOOL (distinct constants or finite domain) */
     FOOL_AXIOM,
     //** Flatten a clause to separate theory literals */

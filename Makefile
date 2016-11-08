@@ -285,6 +285,7 @@ VINF_OBJ=Inferences/BackwardDemodulation.o\
          Inferences/RefutationSeekerFSE.o\
          Inferences/SLQueryBackwardSubsumption.o\
          Inferences/SLQueryForwardSubsumption.o\
+         Inferences/StructuralInduction.o\
          Inferences/Superposition.o\
          Inferences/TautologyDeletionISE.o\
          Inferences/TermAlgebraReasoning.o\

@@ -418,6 +418,8 @@ vstring Inference::ruleName(Rule rule)
     return "term algebras injectivity";
   case TERM_ALGEBRA_ACYCLICITY:
     return "term algebras acyclicity";
+  case STRUCTURAL_INDUCTION:
+    return "structural induction";
   case EXTERNAL:
     return "external";
   case CLAIM_DEFINITION:

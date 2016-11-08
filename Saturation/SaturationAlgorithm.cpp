@@ -45,6 +45,7 @@
 #include "Inferences/HyperSuperposition.hpp"
 #include "Inferences/InnerRewriting.hpp"
 #include "Inferences/RefutationSeekerFSE.hpp"
+#include "Inferences/StructuralInduction.hpp"
 #include "Inferences/TermAlgebraReasoning.hpp"
 #include "Inferences/SLQueryForwardSubsumption.hpp"
 #include "Inferences/SLQueryBackwardSubsumption.hpp"
@@ -1351,6 +1352,7 @@ SaturationAlgorithm* SaturationAlgorithm::createFromOptions(Problem& prb, const 
     if (opt.termAlgebraInferences()) {
       gie->addFront(new InjectivityGIE());
     }
+    gie->addFront(new StructuralInduction());
   }
 
   res->setGeneratingInferenceEngine(gie);
