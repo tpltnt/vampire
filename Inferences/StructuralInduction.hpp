@@ -22,6 +22,8 @@ namespace Inferences {
       ClauseIterator generateClauses(Clause* premise);
 
     private:
+      static Set<Literal*> _generalisedLiterals;
+
       struct IsGroundLiteral;
       struct InductiveSubtermFn;
       struct IsTermAlgebraSubtermFn;

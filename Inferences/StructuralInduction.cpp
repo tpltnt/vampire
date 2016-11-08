@@ -17,16 +17,18 @@
 namespace Inferences {
 
   struct StructuralInduction::GenerateTermAlgebraLiteralsFn {
-    DECL_RETURN_TYPE(VirtualIterator<List<Literal*>*>);
-    OWN_RETURN_TYPE operator()(pair<Literal*, TermList> generalisation) {
-      LiteralGeneralisationFn generalise(generalisation.first, generalisation.second);
+    GenerateTermAlgebraLiteralsFn(Literal* literal) : _literal(literal) {}
 
-      FunctionType* function = env.signature->getFunction(generalisation.second.term()->functor())->fnType();
+    DECL_RETURN_TYPE(VirtualIterator<List<Literal*>*>);
+    OWN_RETURN_TYPE operator()(TermList subterm) {
+      CALL("StructuralInduction::GenerateTermAlgebraLiteralsFn::operator()");
+
+      FunctionType* function = env.signature->getFunction(subterm.term()->functor())->fnType();
       TermAlgebra* termAlgebra = env.signature->getTermAlgebraOfSort(function->result());
 
       List<List<Literal*>*>* constructorsLiterals(0);
       for (unsigned c = 0; c < termAlgebra->nConstructors(); c++) {
-        List<Literal*>* constructorLiterals = generateConstructorLiterals(termAlgebra->constructor(c), generalise);
+        List<Literal*>* constructorLiterals = generateConstructorLiterals(termAlgebra->constructor(c), subterm);
         List<List<Literal*>*>::push(constructorLiterals, constructorsLiterals);
       }
 
@@ -34,20 +36,9 @@ namespace Inferences {
     }
 
   private:
-    struct LiteralGeneralisationFn {
-      LiteralGeneralisationFn(Literal* literal, TermList subterm) : _literal(literal), _subterm(subterm) {}
+    Literal* _literal;
 
-      DECL_RETURN_TYPE(Literal*);
-      OWN_RETURN_TYPE operator()(TermList subterm) {
-        return EqHelper::replace(_literal, _subterm, subterm);
-      }
-
-    private:
-      Literal* _literal;
-      TermList _subterm;
-    };
-
-    List<Literal*>* generateConstructorLiterals(TermAlgebraConstructor* constructor, LiteralGeneralisationFn generalisation) {
+    List<Literal*>* generateConstructorLiterals(TermAlgebraConstructor* constructor, TermList subterm) {
       CALL("StructuralInduction::GenerateTermAlgebraLiteralsFn::generateConstructorLiterals");
       unsigned arity = constructor->arity();
 
@@ -60,12 +51,12 @@ namespace Inferences {
         TermList skolemTerm(Term::createConstant(skolemFunction));
         skolems.push(skolemTerm);
         if (constructor->argSort(argument) == constructor->rangeSort()) {
-          List<Literal*>::push(generalisation(skolemTerm), constructorLiterals);
+          List<Literal*>::push(EqHelper::replace(_literal, subterm, skolemTerm), constructorLiterals);
         }
       }
 
       TermList termAlgebraTerm = TermList(Term::create(constructor->functor(), arity, skolems.begin()));
-      Literal* termAlgebraLiteral = Literal::complementaryLiteral(generalisation(termAlgebraTerm));
+      Literal* termAlgebraLiteral = Literal::complementaryLiteral(EqHelper::replace(_literal, subterm, termAlgebraTerm));
       List<Literal*>::push(termAlgebraLiteral, constructorLiterals);
 
       return constructorLiterals;
@@ -85,8 +76,7 @@ namespace Inferences {
           List<Literal*>* factor = pi.next();
           List<Literal*>::Iterator si(source);
           while (si.hasNext()) {
-            Literal* summand = si.next();
-            List<List<Literal*>*>::push(factor->cons(summand), extendedProduct);
+            List<List<Literal*>*>::push(factor->cons(si.next()), extendedProduct);
           }
         }
         product = extendedProduct;
@@ -102,6 +92,7 @@ namespace Inferences {
 
     DECL_RETURN_TYPE(Clause*);
     OWN_RETURN_TYPE operator()(List<Literal*>* generatedLiterals) {
+      CALL("StructuralInduction::ExtendPremiseFn::operator()");
       Stack<Literal*> literals(_premise->length() - 1 + generatedLiterals->length());
       for (unsigned i = 0; i < _premise->length(); i++) {
         if ((*_premise)[i] != _selectedLiteral) {
@@ -110,7 +101,7 @@ namespace Inferences {
           literals.loadFromIterator(List<Literal*>::Iterator(generatedLiterals));
         }
       }
-      static Inference* inference = new Inference1(Inference::STRUCTURAL_INDUCTION, _premise);
+      Inference* inference = new Inference1(Inference::STRUCTURAL_INDUCTION, _premise);
       Clause* conclusion = Clause::fromStack(literals, _premise->inputType(), inference);
       conclusion->setAge(_premise->age() + 1);
       return conclusion;
@@ -122,10 +113,9 @@ namespace Inferences {
   };
 
   struct StructuralInduction::InductiveGeneralisationIterator {
-    InductiveGeneralisationIterator(Literal* selectedLiteral) {
-      TermIterator nvi = TermIterator(new NonVariableIterator(selectedLiteral));
-      auto uniqueSubterms = getUniquePersistentIterator(nvi);
-      _tasi = pvi(getFilteredIterator(uniqueSubterms, IsTermAlgebraSubtermFn()));
+    InductiveGeneralisationIterator(Literal* literal) {
+      TermIterator nvi = TermIterator(new NonVariableIterator(literal));
+      _tasi = pvi(getFilteredIterator(nvi, IsTermAlgebraSubtermFn(literal)));
     }
 
     bool hasNext() { return _tasi.hasNext(); }
@@ -137,8 +127,12 @@ namespace Inferences {
     TermIterator _tasi;
 
     struct IsTermAlgebraSubtermFn {
+      IsTermAlgebraSubtermFn(Literal* literal): _literal(literal) {}
+
       DECL_RETURN_TYPE(bool);
       OWN_RETURN_TYPE operator()(TermList subterm) {
+        CALL("StructuralInduction::IsTermAlgebraSubtermFn::operator()");
+
         unsigned functor = subterm.term()->functor();
 
         FunctionType* function = env.signature->getFunction(functor)->fnType();
@@ -167,23 +161,42 @@ namespace Inferences {
           return false;
         }
 
+        /** Note: _generalisedLiterals contains literals with exactly one variable that
+         *  represents the generalised subterm of a term algebra datatype.
+         *
+         *  The current implementation relies on the fact that we only consider ground
+         *  literals, so we could simply replace the subterm with a variable.
+         *
+         *  For the extension to the non-ground case that should be improved
+         */
+        ASS(_literal->ground());
+        Literal* generalisedLiteral = EqHelper::replace(_literal, subterm, TermList(0, false));
+        if (_generalisedLiterals.contains(generalisedLiteral)) {
+          return false;
+        } else {
+          _generalisedLiterals.insert(generalisedLiteral);
+        }
+
         return true;
       }
+
+    private:
+      Literal* _literal;
     };
   };
+
+  Set<Literal*> StructuralInduction::_generalisedLiterals;
 
   struct StructuralInduction::InductiveSubtermFn {
     InductiveSubtermFn(Clause* premise): _premise(premise) {}
 
     DECL_RETURN_TYPE(ClauseIterator);
     OWN_RETURN_TYPE operator()(Literal* selectedLiteral) {
+      CALL("StructuralInduction::InductiveSubtermFn::operator()");
       Literal* negatedSelectedLiteral = Literal::complementaryLiteral(selectedLiteral);
-      auto inductiveGeneralisations = pushPairIntoRightIterator(negatedSelectedLiteral, InductiveGeneralisationIterator(selectedLiteral));
-
-      auto termAlgebraLiterals = getMapAndFlattenIterator(inductiveGeneralisations, GenerateTermAlgebraLiteralsFn());
-
+      auto termAlgebraSubterms = InductiveGeneralisationIterator(negatedSelectedLiteral);
+      auto termAlgebraLiterals = getMapAndFlattenIterator(termAlgebraSubterms, GenerateTermAlgebraLiteralsFn(negatedSelectedLiteral));
       auto conclusions = getMappingIterator(termAlgebraLiterals, ExtendPremiseFn(_premise, selectedLiteral));
-
       return pvi(conclusions);
     }
 
