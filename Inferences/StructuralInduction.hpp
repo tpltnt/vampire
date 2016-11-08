@@ -24,7 +24,7 @@ namespace Inferences {
     private:
       struct IsGroundLiteral;
       struct InductiveSubtermFn;
-      struct TermAlgebraSubtermFn;
+      struct IsTermAlgebraSubtermFn;
       struct VirtualNonVariableIterator;
       struct InductiveGeneralisationIterator;
       struct GenerateTermAlgebraLiteralsFn;

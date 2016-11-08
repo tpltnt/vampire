@@ -18,16 +18,15 @@ namespace Inferences {
 
   struct StructuralInduction::GenerateTermAlgebraLiteralsFn {
     DECL_RETURN_TYPE(VirtualIterator<List<Literal*>*>);
-    OWN_RETURN_TYPE operator()(pair<Literal*, pair<TermAlgebra*, TermList> > inductiveGeneralisation) {
-      TermAlgebra* termAlgebra  = inductiveGeneralisation.second.first;
-      Literal* inductiveLiteral = inductiveGeneralisation.first;
-      TermList inductiveSubterm = inductiveGeneralisation.second.second;
+    OWN_RETURN_TYPE operator()(pair<Literal*, TermList> generalisation) {
+      LiteralGeneralisationFn generalise(generalisation.first, generalisation.second);
 
-      LiteralGeneralisationFn generalisation(inductiveLiteral, inductiveSubterm);
+      FunctionType* function = env.signature->getFunction(generalisation.second.term()->functor())->fnType();
+      TermAlgebra* termAlgebra = env.signature->getTermAlgebraOfSort(function->result());
 
       List<List<Literal*>*>* constructorsLiterals(0);
       for (unsigned c = 0; c < termAlgebra->nConstructors(); c++) {
-        List<Literal*>* constructorLiterals = generateConstructorLiterals(termAlgebra->constructor(c), generalisation);
+        List<Literal*>* constructorLiterals = generateConstructorLiterals(termAlgebra->constructor(c), generalise);
         List<List<Literal*>*>::push(constructorLiterals, constructorsLiterals);
       }
 
@@ -122,51 +121,55 @@ namespace Inferences {
     Literal* _selectedLiteral;
   };
 
-  struct StructuralInduction::TermAlgebraSubtermFn {
-    TermAlgebraSubtermFn() {}
-
-    DECL_RETURN_TYPE(VirtualIterator<pair<TermAlgebra*, TermList> >);
-    OWN_RETURN_TYPE operator()(TermList subterm) {
-      unsigned functor = subterm.term()->functor();
-
-      FunctionType* function = env.signature->getFunction(functor)->fnType();
-
-      if (function->arity() > 0) {
-        return VirtualIterator<pair<TermAlgebra*, TermList> >::getEmpty();
-      }
-
-      unsigned resultSort = function->result();
-
-      if (!env.signature->isTermAlgebraSort(resultSort)) {
-        return VirtualIterator<pair<TermAlgebra*, TermList> >::getEmpty();
-      }
-
-      TermAlgebra* ta = env.signature->getTermAlgebraOfSort(resultSort);
-
-      // TODO: write a correct check that a term algebra is recursive
-//      if (!ta->allowsCyclicTerms()) {
-//        cout << "Discarded " << subterm.toString() << " (not recursive)" << endl;
-//        continue;
-//      }
-
-      return pvi(getSingletonIterator(make_pair(ta, subterm)));
-    }
-  };
-
   struct StructuralInduction::InductiveGeneralisationIterator {
     InductiveGeneralisationIterator(Literal* selectedLiteral) {
       TermIterator nvi = TermIterator(new NonVariableIterator(selectedLiteral));
       auto uniqueSubterms = getUniquePersistentIterator(nvi);
-      _tasi = pvi(getMapAndFlattenIterator(uniqueSubterms, TermAlgebraSubtermFn()));
+      _tasi = pvi(getFilteredIterator(uniqueSubterms, IsTermAlgebraSubtermFn()));
     }
 
     bool hasNext() { return _tasi.hasNext(); }
 
-    DECL_ELEMENT_TYPE(pair<TermAlgebra*, TermList>);
+    DECL_ELEMENT_TYPE(TermList);
     OWN_ELEMENT_TYPE next() { return _tasi.next(); }
 
   private:
-    VirtualIterator<pair<TermAlgebra*, TermList> > _tasi;
+    TermIterator _tasi;
+
+    struct IsTermAlgebraSubtermFn {
+      DECL_RETURN_TYPE(bool);
+      OWN_RETURN_TYPE operator()(TermList subterm) {
+        unsigned functor = subterm.term()->functor();
+
+        FunctionType* function = env.signature->getFunction(functor)->fnType();
+
+        if (function->arity() > 0) {
+          return false;
+        }
+
+        unsigned resultSort = function->result();
+
+        if (!env.signature->isTermAlgebraSort(resultSort)) {
+          return false;
+        }
+
+        TermAlgebra* ta = env.signature->getTermAlgebraOfSort(resultSort);
+
+        bool recursive = false;
+        for (unsigned c = 0; c < ta->nConstructors(); c++) {
+          if (ta->constructor(c)->recursive()) {
+            recursive = true;
+            break;
+          }
+        }
+
+        if (!recursive) {
+          return false;
+        }
+
+        return true;
+      }
+    };
   };
 
   struct StructuralInduction::InductiveSubtermFn {
@@ -189,9 +192,8 @@ namespace Inferences {
   };
 
   struct StructuralInduction::IsGroundLiteral {
-    bool operator()(Literal* literal) {
-      return literal->ground();
-    }
+    DECL_RETURN_TYPE(bool);
+    OWN_RETURN_TYPE operator()(Literal* literal) { return literal->ground(); }
   };
 
   ClauseIterator StructuralInduction::generateClauses(Clause* premise) {
