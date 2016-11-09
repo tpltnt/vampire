@@ -161,6 +161,10 @@ namespace Inferences {
           return false;
         }
 
+        if (isTermAlgebraConstant(subterm, ta)) {
+          return false;
+        }
+
         /** Note: _generalisedLiterals contains literals with exactly one variable that
          *  represents the generalised subterm of a term algebra datatype.
          *
@@ -182,6 +186,36 @@ namespace Inferences {
 
     private:
       Literal* _literal;
+
+      static bool isTermAlgebraConstant(TermList ts, TermAlgebra* ta) {
+        Set<unsigned> constructors;
+        for (unsigned c = 0; c < ta->nConstructors(); c++) {
+          constructors.insert(ta->constructor(c)->functor());
+        }
+
+        static Stack<TermList> terms(8);
+        ASS(terms.isEmpty());
+        terms.push(ts);
+
+        while (terms.isNonEmpty()) {
+          TermList t = terms.pop();
+
+          if (!t.isTerm()) {
+            continue;
+          }
+
+          Term* term = t.term();
+
+          if (!constructors.contains(term->functor())) {
+            terms.reset();
+            return false;
+          }
+
+          terms.loadFromIterator(Term::Iterator(term));
+        }
+
+        return true;
+      }
     };
   };
 
