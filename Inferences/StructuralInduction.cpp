@@ -137,9 +137,9 @@ namespace Inferences {
 
         FunctionType* function = env.signature->getFunction(functor)->fnType();
 
-        if (function->arity() > 0) {
-          return false;
-        }
+//        if (function->arity() > 0) {
+//          return false;
+//        }
 
         unsigned resultSort = function->result();
 
@@ -180,6 +180,9 @@ namespace Inferences {
         } else {
           _generalisedLiterals.insert(generalisedLiteral);
         }
+
+//        cout << "[SI] Instantiating structural induction schema for the negation of " << generalisedLiteral->toString()
+//             << " which is a generalisation over " << subterm.toString() << endl;
 
         return true;
       }
@@ -227,9 +230,9 @@ namespace Inferences {
     DECL_RETURN_TYPE(ClauseIterator);
     OWN_RETURN_TYPE operator()(Literal* selectedLiteral) {
       CALL("StructuralInduction::InductiveSubtermFn::operator()");
-      Literal* negatedSelectedLiteral = Literal::complementaryLiteral(selectedLiteral);
-      auto termAlgebraSubterms = InductiveGeneralisationIterator(negatedSelectedLiteral);
-      auto termAlgebraLiterals = getMapAndFlattenIterator(termAlgebraSubterms, GenerateTermAlgebraLiteralsFn(negatedSelectedLiteral));
+      auto termAlgebraSubterms = InductiveGeneralisationIterator(selectedLiteral);
+      GenerateTermAlgebraLiteralsFn generator(Literal::complementaryLiteral(selectedLiteral));
+      auto termAlgebraLiterals = getMapAndFlattenIterator(termAlgebraSubterms, generator);
       auto conclusions = getMappingIterator(termAlgebraLiterals, ExtendPremiseFn(_premise, selectedLiteral));
       return pvi(conclusions);
     }
@@ -240,7 +243,9 @@ namespace Inferences {
 
   struct StructuralInduction::IsGroundLiteral {
     DECL_RETURN_TYPE(bool);
-    OWN_RETURN_TYPE operator()(Literal* literal) { return literal->ground(); }
+    OWN_RETURN_TYPE operator()(Literal* literal) {
+      return literal->ground() && !literal->polarity();
+    }
   };
 
   ClauseIterator StructuralInduction::generateClauses(Clause* premise) {
