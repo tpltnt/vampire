@@ -930,6 +930,11 @@ void Options::Options::init()
             _lookup.insert(&_termAlgebraCyclicityCheck);
             _termAlgebraCyclicityCheck.tag(OptionTag::INFERENCES);
 
+            _structuralInduction = BoolOptionValue("structural_induction","sind",true);
+            _structuralInduction .description="Reasoning using structural induction";
+            _lookup.insert(&_structuralInduction);
+            _structuralInduction.tag(OptionTag::INFERENCES);
+
 	    _forwardDemodulation = ChoiceOptionValue<Demodulation>("forward_demodulation","fd",Demodulation::ALL,{"all","off","preordered"});
 	    _forwardDemodulation.description=
 	    "Oriented rewriting of newly derived clauses by kept unit equalities\n"

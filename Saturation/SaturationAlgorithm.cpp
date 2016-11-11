@@ -1352,7 +1352,9 @@ SaturationAlgorithm* SaturationAlgorithm::createFromOptions(Problem& prb, const 
     if (opt.termAlgebraInferences()) {
       gie->addFront(new InjectivityGIE());
     }
-    gie->addFront(new StructuralInduction());
+    if (opt.structuralInduction()) {
+      gie->addFront(new StructuralInduction());
+    }
   }
 
   res->setGeneratingInferenceEngine(gie);
