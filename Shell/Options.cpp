@@ -935,6 +935,21 @@ void Options::Options::init()
             _lookup.insert(&_structuralInduction);
             _structuralInduction.tag(OptionTag::INFERENCES);
 
+            _structuralInductionPositiveLiterals = BoolOptionValue("structural_induction_positive_literals","sipl",true);
+            _structuralInductionPositiveLiterals.description="Apply structural induction to positive selected literals";
+            _lookup.insert(&_structuralInductionPositiveLiterals);
+            _structuralInductionPositiveLiterals.tag(OptionTag::INFERENCES);
+
+            _structuralInductionNegativeLiterals = BoolOptionValue("structural_induction_negative_literals","sinl",true);
+            _structuralInductionNegativeLiterals.description="Apply structural induction to negative selected literals";
+            _lookup.insert(&_structuralInductionNegativeLiterals);
+            _structuralInductionNegativeLiterals.tag(OptionTag::INFERENCES);
+    
+            _structuralInductionSubtermArity = IntOptionValue("structural_induction_subterm_arity","sisa",true);
+            _structuralInductionSubtermArity.description="Max arity of a subterm of the sort of a inductive term algebra over which to apply induction";
+            _lookup.insert(&_structuralInductionSubtermArity);
+            _structuralInductionSubtermArity.tag(OptionTag::INFERENCES);
+
 	    _forwardDemodulation = ChoiceOptionValue<Demodulation>("forward_demodulation","fd",Demodulation::ALL,{"all","off","preordered"});
 	    _forwardDemodulation.description=
 	    "Oriented rewriting of newly derived clauses by kept unit equalities\n"

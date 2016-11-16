@@ -1815,6 +1815,9 @@ public:
   bool termAlgebraInferences() const { return _termAlgebraInferences.actualValue; }
   TACyclicityCheck termAlgebraCyclicityCheck() const { return _termAlgebraCyclicityCheck.actualValue; }
   bool structuralInduction() const { return _structuralInduction.actualValue; }
+  bool structuralInductionPositiveLiterals() const { return _structuralInductionPositiveLiterals.actualValue; }
+  bool structuralInductionNegativeLiterals() const { return _structuralInductionNegativeLiterals.actualValue; }
+  int structuralInductionSubtermArity() const { return _structuralInductionSubtermArity.actualValue; }
   unsigned extensionalityMaxLength() const { return _extensionalityMaxLength.actualValue; }
   bool extensionalityAllowPosEq() const { return _extensionalityAllowPosEq.actualValue; }
   float nongoalWeightCoefficient() const { return _nonGoalWeightCoefficient.actualValue; }
@@ -2092,6 +2095,9 @@ private:
   ChoiceOptionValue<TACyclicityCheck> _termAlgebraCyclicityCheck;
 
   BoolOptionValue _structuralInduction;
+  BoolOptionValue _structuralInductionPositiveLiterals;
+  BoolOptionValue _structuralInductionNegativeLiterals;
+  IntOptionValue _structuralInductionSubtermArity;
 
   BoolOptionValue _fmbNonGroundDefs;
   UnsignedOptionValue _fmbStartSize;

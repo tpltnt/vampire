@@ -24,7 +24,7 @@ namespace Inferences {
     private:
       static Set<Literal*> _generalisedLiterals;
 
-      struct IsGroundLiteral;
+      struct IsEligibleLiteral;
       struct InductiveSubtermFn;
       struct IsTermAlgebraSubtermFn;
       struct VirtualNonVariableIterator;

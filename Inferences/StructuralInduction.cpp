@@ -10,6 +10,7 @@
 #include "Kernel/Signature.hpp"
 #include "Kernel/TermIterators.hpp"
 
+#include "Shell/Options.hpp"
 #include "Shell/Skolem.hpp"
 
 #include "StructuralInduction.hpp"
@@ -137,9 +138,10 @@ namespace Inferences {
 
         FunctionType* function = env.signature->getFunction(functor)->fnType();
 
-//        if (function->arity() > 0) {
-//          return false;
-//        }
+        if (env.options->structuralInductionSubtermArity() >= 0 &&
+            function->arity() > env.options->structuralInductionSubtermArity()) {
+          return false;
+        }
 
         unsigned resultSort = function->result();
 
@@ -241,17 +243,31 @@ namespace Inferences {
     Clause* _premise;
   };
 
-  struct StructuralInduction::IsGroundLiteral {
+  struct StructuralInduction::IsEligibleLiteral {
     DECL_RETURN_TYPE(bool);
     OWN_RETURN_TYPE operator()(Literal* literal) {
-      return literal->ground() && !literal->polarity();
+      if (!literal->ground()) {
+        return false;
+      }
+
+      if (literal->polarity()) {
+        if (!env.options->structuralInductionPositiveLiterals()) {
+          return false;
+        }
+      } else {
+        if (!env.options->structuralInductionNegativeLiterals()) {
+          return false;
+        }
+      }
+
+      return true;
     }
   };
 
   ClauseIterator StructuralInduction::generateClauses(Clause* premise) {
     CALL("StructuralInduction::generateClauses");
     auto selectedLiterals = premise->getSelectedLiteralIterator();
-    auto groundSelectedLiterals = getFilteredIterator(selectedLiterals, IsGroundLiteral());
+    auto groundSelectedLiterals = getFilteredIterator(selectedLiterals, IsEligibleLiteral());
     return pvi(getMapAndFlattenIterator(groundSelectedLiterals, InductiveSubtermFn(premise)));
   }
 
